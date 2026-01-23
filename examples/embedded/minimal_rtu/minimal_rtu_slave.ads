@@ -2,7 +2,7 @@
 --  Copyright (c) 2026 Florian Fischer
 --  SPDX-License-Identifier: MIT
 --
---  This is a minimal embedded example showing how to use libSimpleModbus
+--  This is a minimal embedded example showing how to use AdaModbus
 --  for Modbus RTU on bare-metal embedded systems without any OS or TCP/IP.
 --
 --  To use:

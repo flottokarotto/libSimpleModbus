@@ -1,4 +1,4 @@
---  Test_Runner - Main test runner for libSimpleModbus
+--  Test_Runner - Main test runner for AdaModbus
 --  Copyright (c) 2026 Florian Fischer
 --  SPDX-License-Identifier: MIT
 

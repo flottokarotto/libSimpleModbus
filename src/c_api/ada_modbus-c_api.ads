@@ -1,4 +1,4 @@
---  Ada_Modbus.C_API - C language bindings for libSimpleModbus
+--  Ada_Modbus.C_API - C language bindings for AdaModbus
 --  Copyright (c) 2026 Florian Fischer
 --  SPDX-License-Identifier: MIT
 --
