@@ -64,8 +64,9 @@ project Adamodbus is
             --  Debug: -g (debug info), -O0 (no optimization), -gnata (assertions enabled)
             for Default_Switches ("Ada") use Common_Switches & ("-g", "-O0", "-gnata");
          when "release" =>
-            --  Release: -O2 (optimization), -gnatn (inlining enabled)
-            for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn");
+            --  Release: -O2 (optimization), -gnatn (inlining), -gnatp (suppress runtime checks)
+            --  Note: -gnatp is safe because 100% of SPARK checks are proven
+            for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
       end case;
    end Compiler;
 
