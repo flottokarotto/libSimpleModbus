@@ -12,7 +12,7 @@ project Examples is
                   "async_master.adb", "ascii_master.adb", "ascii_slave.adb",
                   "modbus_gateway.adb", "multi_slave_poll.adb",
                   "diagnostics_demo.adb", "data_logger.adb",
-                  "device_simulator.adb");
+                  "device_simulator.adb", "kostal_reader.adb");
 
    package Compiler is
       --  Inherit common switches from main library, plus debug flags:
