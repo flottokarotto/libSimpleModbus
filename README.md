@@ -285,7 +285,7 @@ alr build
 
 # Cross-compile for ARM Cortex-M
 alr toolchain --select gnat_arm_elf
-alr build -- --target=arm-eabi --RTS=light-cortex-m4f -XLIBSIMPLEMODBUS_BUILD_MODE=release
+alr build -- --target=arm-eabi --RTS=light-cortex-m4f -XADAMODBUS_BUILD_MODE=release
 ```
 
 ### Files
@@ -295,7 +295,7 @@ Copy these to your project:
 | File                          | Description                  |
 | ----------------------------- | ---------------------------- |
 | `lib/adamodbus.a`     | Static library               |
-| `src/c_api/simple_modbus.h` | C header (API documentation) |
+| `src/c_api/ada_modbus.h` | C header (API documentation) |
 
 With **Light runtime**: No additional dependencies.
 With **Light-Tasking/Full**: Also link `-lgnat`.
@@ -315,7 +315,7 @@ arm-none-eabi-gcc myapp.c -Llib -ladamodbus -o firmware.elf
 
 ### API
 
-See `src/c_api/simple_modbus.h` for full API documentation.
+See `src/c_api/ada_modbus.h` for full API documentation.
 See `examples/c/c_tcp_master.c` and `examples/c/c_tcp_slave.c` for usage examples.
 
 ## Package Structure
