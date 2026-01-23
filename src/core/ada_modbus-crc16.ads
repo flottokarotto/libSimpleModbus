@@ -33,8 +33,12 @@ is
      (Buffer : in out Byte_Array;
       Length : in out Natural;
       CRC    : CRC_Value)
-     with Pre => Length <= Buffer'Length - 2
+     with Pre => Buffer'Length >= 2
+                 and then Length <= Buffer'Length - 2
                  and then Buffer'First + Length + 1 <= Buffer'Last
                  and then Length <= Natural'Last - 2;
+   pragma Annotate (GNATprove, False_Positive,
+                    "range check might fail",
+                    "Buffer'Length >= 2 ensures subtraction is valid");
 
 end Ada_Modbus.CRC16;

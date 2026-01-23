@@ -25,3 +25,6 @@ gnat = ">=12"
 # gnatprove for SPARK verification (optional, only needed for formal verification)
 [[depends-on]]
 gnatprove = "^15"
+
+[[depends-on]]
+aunit = "^26.0.0"

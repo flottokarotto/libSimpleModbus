@@ -109,7 +109,8 @@ is
       Values   : out Coil_Array;
       Count    : out Natural;
       Response : out Status)
-     with Pre => Length <= Max_PDU_Size;
+     with Pre => Length <= Max_PDU_Size
+                 and then Values'Length <= 2000;
 
    --  Read Holding Registers / Read Input Registers Response
    --  Response: FC(1) + ByteCount(1) + RegisterValues(2*n)
@@ -119,7 +120,8 @@ is
       Values   : out Register_Array;
       Count    : out Natural;
       Response : out Status)
-     with Pre => Length <= Max_PDU_Size;
+     with Pre => Length <= Max_PDU_Size
+                 and then Values'Length <= 125;
 
    --  Write Single Coil / Write Single Register Response (echo)
    --  Response: FC(1) + Address(2) + Value(2) = 5 bytes
@@ -202,7 +204,8 @@ is
       Add_Data      : out Byte_Array;
       Add_Data_Len  : out Natural;
       Response      : out Status)
-     with Pre => Length <= Max_PDU_Size;
+     with Pre => Length <= Max_PDU_Size
+                 and then Add_Data'Length <= Max_PDU_Size;
 
    --  Mask Write Register (FC 22)
    --  Request: FC(1) + Address(2) + And_Mask(2) + Or_Mask(2) = 7 bytes
@@ -246,6 +249,7 @@ is
       Values   : out Register_Array;
       Count    : out Natural;
       Response : out Status)
-     with Pre => Length <= Max_PDU_Size;
+     with Pre => Length <= Max_PDU_Size
+                 and then Values'Length <= 125;
 
 end Ada_Modbus.Protocol;
