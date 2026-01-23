@@ -28,9 +28,12 @@ jobs:
       - name: Build library
         run: alr build
 
+      - name: Add test dependencies
+        run: alr with aunit gnatprove --force
+
       - name: Build tests with coverage
         run: |
-          alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled -aP aunit/lib/gnat
+          alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled
 
       - name: Run tests
         run: ./bin/test_runner
@@ -70,6 +73,9 @@ jobs:
 
       - name: Select toolchain
         run: alr toolchain --select gnat_native^15 gprbuild
+
+      - name: Add gnatprove
+        run: alr with gnatprove --force
 
       - name: Cache SPARK results
         uses: actions/cache@v4
