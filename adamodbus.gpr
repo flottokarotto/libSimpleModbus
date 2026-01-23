@@ -1,14 +1,21 @@
+--  AdaModbus - Ada 2022 Modbus Library
+--
+--  SPARK-verified core library for embedded and desktop systems.
+--  For TLS support, see the separate adamodbus_tls crate (tls/ subdirectory).
+--
+--  Configuration:
+--    ADAMODBUS_BUILD_MODE: "debug" (default) or "release"
+
 project Adamodbus is
 
    for Library_Name use "adamodbus";
    for Library_Version use "1.0.0";
 
-   for Source_Dirs use ("src/**");
+   for Source_Dirs use ("src/core", "src/transport", "src/c_api");
    for Object_Dir use "obj";
    for Library_Dir use "lib";
 
    --  Build as Stand-Alone Library for C interoperability
-   --  Auto-init ensures Ada runtime is initialized when library is loaded
    for Library_Kind use "static";
    for Library_Standalone use "standard";
    for Library_Auto_Init use "true";
@@ -33,40 +40,12 @@ project Adamodbus is
    Build_Mode : Build_Mode_Type := external ("ADAMODBUS_BUILD_MODE", "debug");
 
    package Compiler is
-      --  Common switches for all build modes:
-      --    -gnat2022  : Ada 2022 language standard
-      --    -gnatwa    : Enable all common warnings
-      --    -gnatw.X   : Disable warnings for No_Exception_Propagation
-      --    -gnatya    : Check attribute casing
-      --    -gnatyA    : Use of array index numbers in array attributes
-      --    -gnatyb    : Blanks not allowed at statement end
-      --    -gnatyC    : Check comments, double space
-      --    -gnatyd    : Check no DOS line terminators
-      --    -gnatye    : Check end/exit labels
-      --    -gnatyf    : No form feeds or vertical tabs
-      --    -gnatyh    : No horizontal tabs
-      --    -gnatyi    : Check if-then layout
-      --    -gnatyI    : Check mode IN keywords
-      --    -gnatyk    : Check casing of keywords
-      --    -gnatyl    : Check layout
-      --    -gnatyn    : Check casing of entities in Standard
-      --    -gnatyO    : Check overriding indicators
-      --    -gnatyp    : Check pragma casing
-      --    -gnatyr    : Check casing of identifiers in references
-      --    -gnatyt    : Check token separation rules
-      --    -gnatyx    : Check extra parentheses around conditionals
-      --  Note: -gnatys (separate specs) and -gnatyu (blank lines) omitted
-      --        to allow internal helper functions and readable formatting
       Common_Switches := ("-gnat2022", "-gnatwa", "-gnatw.X", "-gnatyaAbCdefhiIklnOprtx");
 
       case Build_Mode is
          when "debug" =>
-            --  Debug: -g (debug info), -O0 (no optimization)
-            --  Note: -gnata omitted to match release runtime behavior (SPARK proves contracts)
             for Default_Switches ("Ada") use Common_Switches & ("-g", "-O0");
          when "release" =>
-            --  Release: -O2 (optimization), -gnatn (inlining), -gnatp (suppress runtime checks)
-            --  Note: -gnatp is safe because 100% of SPARK checks are proven
             for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
       end case;
    end Compiler;

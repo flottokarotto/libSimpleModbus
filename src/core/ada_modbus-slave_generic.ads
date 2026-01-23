@@ -21,6 +21,9 @@
 
 with Interfaces;
 with Ada_Modbus.Protocol;
+with Ada_Modbus.Protocol.RTU;
+with Ada_Modbus.Protocol.ASCII;
+with Ada_Modbus.Protocol.TCP;
 with Ada_Modbus.Slave_Stubs;
 
 generic

@@ -1,14 +1,14 @@
-name = "adamodbus"
-description = "SPARK-verified Ada 2022 Modbus library for embedded systems"
+name = "adamodbus_tls"
+description = "TLS transport for AdaModbus (Modbus/TCP Security)"
 version = "1.0.0"
 licenses = "MIT"
 authors = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]
 maintainers = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]
 maintainers-logins = ["flottflo"]
 
-tags = ["modbus", "embedded", "protocol", "serial", "tcp", "spark", "industrial"]
+tags = ["modbus", "tls", "ssl", "security", "tcp"]
 
-# For TLS support, use the separate adamodbus_tls crate
+project-files = ["adamodbus_tls.gpr"]
 
 [gpr-externals]
 ADAMODBUS_BUILD_MODE = ["debug", "release"]
@@ -17,4 +17,7 @@ ADAMODBUS_BUILD_MODE = ["debug", "release"]
 ADAMODBUS_BUILD_MODE = "debug"
 
 [[depends-on]]
-gnat = ">=12"
+adamodbus = "^1.0.0"
+
+[[depends-on]]
+aws = "^25.2.0"

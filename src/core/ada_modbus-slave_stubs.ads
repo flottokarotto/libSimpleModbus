@@ -20,28 +20,28 @@ is
      (Start_Address : Coil_Address;
       Quantity      : Coil_Count;
       Values        : out Coil_Array) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Read Discrete Inputs (FC 02) - not supported
    function Null_Read_Discrete_Inputs
      (Start_Address : Coil_Address;
       Quantity      : Coil_Count;
       Values        : out Coil_Array) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Read Holding Registers (FC 03) - not supported
    function Null_Read_Holding_Registers
      (Start_Address : Register_Address;
       Quantity      : Register_Count;
       Values        : out Register_Array) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Read Input Registers (FC 04) - not supported
    function Null_Read_Input_Registers
      (Start_Address : Register_Address;
       Quantity      : Register_Count;
       Values        : out Register_Array) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Write Single Coil (FC 05) - not supported
    function Null_Write_Single_Coil
@@ -70,14 +70,14 @@ is
    --  Read Exception Status (FC 07) - not supported
    function Null_Read_Exception_Status
      (Exception_Status : out Byte) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Diagnostics (FC 08) - not supported
    function Null_Diagnostics
      (Sub_Function : Interfaces.Unsigned_16;
       Data_In      : Interfaces.Unsigned_16;
       Data_Out     : out Interfaces.Unsigned_16) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Report Server ID (FC 17) - not supported
    function Null_Report_Server_Id
@@ -85,7 +85,7 @@ is
       Run_Indicator : out Boolean;
       Add_Data      : out Byte_Array;
       Add_Data_Len  : out Natural) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
    --  Mask Write Register (FC 22) - not supported
    function Null_Mask_Write_Register
@@ -101,6 +101,6 @@ is
       Read_Values   : out Register_Array;
       Write_Start   : Register_Address;
       Write_Values  : Register_Array) return Status
-     with Global => null;
+     with Side_Effects, Global => null;
 
 end Ada_Modbus.Slave_Stubs;
