@@ -16,6 +16,7 @@ with Test_TCP;
 with Test_Slave;
 with Test_Master;
 with Test_Async;
+with Test_SunSpec;
 
 procedure Test_Runner is
 
@@ -41,6 +42,9 @@ procedure Test_Runner is
 
       --  Async API tests
       S.Add_Test (Test_Async.Suite);
+
+      --  Energy management tests
+      S.Add_Test (Test_SunSpec.Suite);
 
       return S;
    end Suite;

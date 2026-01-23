@@ -4,7 +4,7 @@ project Aunit_Tests is
 
    --  Include library sources directly for unit testing
    --  (bypasses SAL interface restrictions)
-   for Source_Dirs use ("unit", "../src/core", "../src/transport");
+   for Source_Dirs use ("unit", "../src/core", "../src/transport", "../src/energy");
    for Object_Dir use "../obj/tests";
    for Exec_Dir use "../bin";
    for Main use ("test_runner.adb");

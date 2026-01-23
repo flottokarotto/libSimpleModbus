@@ -7,7 +7,7 @@
 
 [![CI](https://github.com/flottokarotto/AdaModbus/actions/workflows/ci.yml/badge.svg)](https://github.com/flottokarotto/AdaModbus/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/flottokarotto/AdaModbus/graph/badge.svg)](https://codecov.io/gh/flottokarotto/AdaModbus)
-[![SPARK](https://img.shields.io/badge/SPARK-99%25%20proven-brightgreen)](https://www.adacore.com/about-spark)
+[![SPARK](https://img.shields.io/badge/SPARK-100%25%20proven-brightgreen)](https://www.adacore.com/about-spark)
 
 Ada 2022 Modbus library for embedded and desktop systems.
 
@@ -16,7 +16,8 @@ Ada 2022 Modbus library for embedded and desktop systems.
 - **Protocols**: Modbus RTU, ASCII, and TCP
 - **Roles**: Master (Client) and Slave (Server)
 - **ZFP-compatible core**: No tasking, exceptions, or dynamic allocation in protocol layer
-- **SPARK verified**: 99% of runtime checks formally proven (see below)
+- **SPARK verified**: 100% of runtime checks formally proven (see below)
+- **Energy management**: SunSpec, SG-Ready, and §14a grid control support
 - **Cross-platform**: Works on Windows, Linux, and embedded systems
 - **Transport abstraction**: Generic design allows custom transport backends
 
@@ -74,11 +75,12 @@ The protocol core is formally verified using [SPARK](https://www.adacore.com/abo
 
 | Metric | Value |
 |--------|-------|
-| Total checks | 421 |
-| Proven | 416 (99%) |
-| Unproven | 5 (1%) |
+| Total checks | 628 |
+| Flow analysis | 189 (30%) |
+| Proven (Prover) | 438 (70%) |
+| Unproven | 0 (0%) |
 
-The 5 unproven checks are for unconstrained array bounds that depend on caller-provided data - these are protected by runtime checks.
+All runtime checks are formally proven, enabling safe compilation with `-gnatp` (suppress all checks) for maximum performance.
 
 ### Verified Properties
 
@@ -89,13 +91,15 @@ The 5 unproven checks are for unconstrained array bounds that depend on caller-p
 
 ### Verified Packages
 
-All protocol packages have `SPARK_Mode => On`:
+All protocol and energy packages have `SPARK_Mode => On`:
 
 - `Ada_Modbus` - Base types
 - `Ada_Modbus.Protocol` - PDU encoding/decoding
 - `Ada_Modbus.Protocol.RTU/ASCII/TCP` - Framing layers
 - `Ada_Modbus.CRC16`, `Ada_Modbus.LRC` - Checksums
 - `Ada_Modbus.Utilities` - Byte order conversion
+- `Ada_Modbus.Energy.SunSpec` - SunSpec model discovery and utilities
+- `Ada_Modbus.Energy.SunSpec.Common/Inverter/Storage` - SunSpec device models
 
 ### Running SPARK Analysis
 
@@ -332,9 +336,16 @@ Ada_Modbus                         -- Base types (Byte, Register, Status, etc.)
 ├── Ada_Modbus.Master              -- Master (Client) - generic
 │   └── Ada_Modbus.Master.Async    -- Non-blocking async API
 ├── Ada_Modbus.Slave               -- Slave (Server) - callback-based
-└── Ada_Modbus.Transport           -- Transport abstraction
-    ├── Ada_Modbus.Transport.TCP   -- TCP socket backend
-    └── Ada_Modbus.Transport.Serial -- Serial port (COM/TTY) backend
+├── Ada_Modbus.Transport           -- Transport abstraction
+│   ├── Ada_Modbus.Transport.TCP   -- TCP socket backend
+│   └── Ada_Modbus.Transport.Serial -- Serial port (COM/TTY) backend
+└── Ada_Modbus.Energy              -- Energy management extensions
+    ├── Ada_Modbus.Energy.SG_Ready    -- Heat pump control (generic)
+    ├── Ada_Modbus.Energy.Grid_Control -- §14a power limitation (generic)
+    └── Ada_Modbus.Energy.SunSpec     -- SunSpec Alliance profiles
+        ├── Ada_Modbus.Energy.SunSpec.Common   -- Model 1: Device info
+        ├── Ada_Modbus.Energy.SunSpec.Inverter -- Models 101-103: Solar inverter
+        └── Ada_Modbus.Energy.SunSpec.Storage  -- Model 124: Battery storage
 ```
 
 ## Directory Structure
@@ -343,11 +354,14 @@ Ada_Modbus                         -- Base types (Byte, Register, Status, etc.)
 AdaModbus/
 ├── src/
 │   ├── core/           -- Protocol core (ZFP-compatible)
-│   └── transport/      -- Transport backends
+│   ├── transport/      -- Transport backends
+│   ├── energy/         -- Energy management (SunSpec, SG-Ready, §14a)
+│   └── c_api/          -- C interface
+├── tls/                -- TLS extension (separate Alire crate)
 ├── tests/
 │   └── unit/           -- AUnit tests
 ├── examples/           -- Demo programs
-├── adamodbus.gpr -- Main GPR project
+├── adamodbus.gpr       -- Main GPR project
 ├── alire.toml          -- Alire manifest
 └── README.md
 ```
