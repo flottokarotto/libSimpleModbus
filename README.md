@@ -84,9 +84,10 @@ The protocol core and energy packages are formally verified using [SPARK](https:
 
 | Metric | Value |
 |--------|-------|
-| Total checks | 628 |
-| Flow analysis | 189 (30%) |
-| Proven (Prover) | 438 (70%) |
+| Total checks | 1045 |
+| Flow analysis | 263 (25%) |
+| Proven (Prover) | 776 (74%) |
+| Justified | 6 (1%) |
 | Unproven | 0 (0%) |
 
 All runtime checks in SPARK packages are formally proven, enabling safe compilation with `-gnatp`. Non-SPARK packages retain runtime checks.
@@ -109,7 +110,7 @@ All protocol and energy packages have `SPARK_Mode => On`:
 - `Ada_Modbus.Utilities` - Byte order conversion
 - `Ada_Modbus.Slave_Generic`, `Ada_Modbus.Slave_Stubs` - Generic slave handlers
 - `Ada_Modbus.Energy.SunSpec` - SunSpec model discovery and utilities
-- `Ada_Modbus.Energy.SunSpec.Common/Inverter/Storage` - SunSpec device models
+- `Ada_Modbus.Energy.SunSpec.*` - SunSpec device models (Common, Inverter, Storage, Meter, Nameplate, Settings, DER, Battery)
 - `Ada_Modbus.Energy.SG_Ready` - Heat pump control
 - `Ada_Modbus.Energy.Grid_Control` - §14a power limitation
 
@@ -269,14 +270,28 @@ end;
 
 ## Demo Programs
 
-### Ada
+### Basic Examples
 
 ```bash
-./bin/tcp_slave [port]     # Server (default: 1502)
+./bin/tcp_slave [port]          # Server (default: 1502)
 ./bin/tcp_master [host] [port]  # Client (default: localhost 1502)
+./bin/rtu_master [port]         # RTU master (serial)
+./bin/rtu_slave [port]          # RTU slave (serial)
 ```
 
-### C
+### Energy Monitoring (SunSpec)
+
+```bash
+# Kostal inverter (PLENTICORE, PIKO)
+./bin/kostal_reader <ip> [port] [unit]     # One-shot reading
+./bin/kostal_dashboard <ip> [port] [unit]  # Live terminal dashboard
+
+# Kostal Smart Energy Meter (KSEM)
+./bin/ksem_reader <ip> [port] [unit]       # One-shot reading
+./bin/ksem_dashboard <ip> [port] [unit]    # Live terminal dashboard
+```
+
+### C Examples
 
 ```bash
 ./bin/c_tcp_slave [port]
@@ -356,8 +371,13 @@ Ada_Modbus                         -- Base types (Byte, Register, Status, etc.)
     ├── Ada_Modbus.Energy.Grid_Control -- §14a power limitation (generic)
     └── Ada_Modbus.Energy.SunSpec     -- SunSpec Alliance profiles
         ├── Ada_Modbus.Energy.SunSpec.Common   -- Model 1: Device info
-        ├── Ada_Modbus.Energy.SunSpec.Inverter -- Models 101-103: Solar inverter
-        └── Ada_Modbus.Energy.SunSpec.Storage  -- Model 124: Battery storage
+        ├── Ada_Modbus.Energy.SunSpec.Inverter -- Models 101-103, 160: Inverter + MPPT
+        ├── Ada_Modbus.Energy.SunSpec.Storage  -- Model 124: Battery storage
+        ├── Ada_Modbus.Energy.SunSpec.Meter    -- Models 201-204: Energy meters
+        ├── Ada_Modbus.Energy.SunSpec.Nameplate -- Model 120: Inverter ratings
+        ├── Ada_Modbus.Energy.SunSpec.Settings -- Model 121: Basic settings
+        ├── Ada_Modbus.Energy.SunSpec.DER      -- Models 701/704: Grid integration
+        └── Ada_Modbus.Energy.SunSpec.Battery  -- Model 802: Extended battery
 ```
 
 ## Directory Structure
