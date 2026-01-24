@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master, main]
 
+env:
+  ALIRE_VERSION: 2.1.0
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -19,18 +22,25 @@ jobs:
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
         with:
-          version: 2.1.0
+          version: ${{ env.ALIRE_VERSION }}
           toolchain: gnat_native^15
+          cache: true
 
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
+      - name: Cache Alire dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/alire
+            alire
+          key: alire-native-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
+          restore-keys: |
+            alire-native-${{ runner.os }}-
 
       - name: Build library
         run: alr build
 
       - name: Build tests with coverage
-        run: |
-          alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled
+        run: alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled
 
       - name: Run tests
         run: ./bin/test_runner
@@ -58,10 +68,19 @@ jobs:
           python3 tools/sunspec_codegen.py --validate 103 src/energy/ada_modbus-energy-sunspec-inverter.ads
           python3 tools/sunspec_codegen.py --validate 124 src/energy/ada_modbus-energy-sunspec-storage.ads
           python3 tools/sunspec_codegen.py --validate 203 src/energy/ada_modbus-energy-sunspec-meter.ads
-          # Note: Model 160 (MPPT) has repeating groups, needs manual validation
 
       - name: Build examples
         run: alr exec -- gprbuild -P examples/examples.gpr
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            bin/
+            obj/
+            alire/
+          retention-days: 1
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -74,24 +93,23 @@ jobs:
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
         with:
-          version: 2.1.0
+          version: ${{ env.ALIRE_VERSION }}
           toolchain: gnat_native^15
+          cache: true
 
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
-
-      - name: Build library
-        run: alr build
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install pymodbus
-        run: |
-          python3 -m pip install pymodbus
-          python3 -c "from pymodbus.server import StartTcpServer; print('Import OK')"
+        run: python3 -m pip install pymodbus
 
       - name: Start Modbus Simulator
         run: |
@@ -119,11 +137,19 @@ jobs:
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
         with:
-          version: 2.1.0
+          version: ${{ env.ALIRE_VERSION }}
           toolchain: gnat_native^15
+          cache: true
 
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
+      - name: Cache Alire dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/alire
+            alire
+          key: alire-native-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
+          restore-keys: |
+            alire-native-${{ runner.os }}-
 
       - name: Sync dependencies
         run: alr update
@@ -142,7 +168,6 @@ jobs:
             --mode=prove --level=1 -j0 \
             --report=statistics --output=oneline 2>&1 | tee spark_results.txt
 
-          # Check for proof regression (should have <=5 unproven)
           UNPROVEN=$(grep -oP 'Unproved\s+\K\d+' spark_results.txt || echo "0")
           echo "Unproven checks: $UNPROVEN"
           if [ "$UNPROVEN" -gt 5 ]; then
@@ -169,14 +194,32 @@ jobs:
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
         with:
-          version: 2.1.0
+          version: ${{ env.ALIRE_VERSION }}
           toolchain: gnat_arm_elf^15
+          cache: true
 
-      - name: Select ARM toolchain
-        run: alr toolchain --select gnat_arm_elf^15 gprbuild
+      - name: Cache Alire ARM dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/alire
+            examples/embedded/cortex_m4_lwip/alire
+            examples/embedded/stm32_rtu/alire
+          key: alire-arm-${{ runner.os }}-${{ hashFiles('examples/embedded/**/alire.toml') }}
+          restore-keys: |
+            alire-arm-${{ runner.os }}-
+
+      - name: Cache QEMU
+        uses: actions/cache@v4
+        with:
+          path: /usr/bin/qemu-system-arm
+          key: qemu-arm-${{ runner.os }}
 
       - name: Install QEMU
-        run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
+        run: |
+          if ! command -v qemu-system-arm &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y qemu-system-arm
+          fi
 
       - name: Build embedded loopback example
         run: cd examples/embedded/cortex_m4_lwip && alr build
