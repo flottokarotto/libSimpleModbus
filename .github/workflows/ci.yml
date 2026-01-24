@@ -89,11 +89,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install pymodbus
-        run: pip install pymodbus
+        run: ${{ env.pythonLocation }}/bin/pip install pymodbus
 
       - name: Start Modbus Simulator
         run: |
-          python3 tests/integration/modbus_simulator.py --port 5020 &
+          ${{ env.pythonLocation }}/bin/python3 tests/integration/modbus_simulator.py --port 5020 &
           sleep 2
 
       - name: Build integration tests
