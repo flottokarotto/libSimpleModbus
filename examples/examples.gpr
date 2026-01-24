@@ -13,7 +13,8 @@ project Examples is
                   "modbus_gateway.adb", "multi_slave_poll.adb",
                   "diagnostics_demo.adb", "data_logger.adb",
                   "device_simulator.adb", "kostal_reader.adb",
-                  "ksem_reader.adb");
+                  "ksem_reader.adb", "kostal_dashboard.adb",
+                  "ksem_dashboard.adb");
 
    package Compiler is
       --  Inherit common switches from main library, plus debug flags:
