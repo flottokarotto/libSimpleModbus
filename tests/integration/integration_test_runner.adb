@@ -10,10 +10,12 @@
 --    alr build -- -P integration_tests.gpr
 --    ./bin/integration_test_runner
 
+with AUnit; use AUnit;
 with AUnit.Run;
 with AUnit.Reporter.Text;
 with AUnit.Test_Suites; use AUnit.Test_Suites;
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Command_Line;
 
 with Integration_Tests;
 
@@ -28,9 +30,10 @@ procedure Integration_Test_Runner is
       return S;
    end Suite;
 
-   procedure Run is new AUnit.Run.Test_Runner (Suite);
+   function Run is new AUnit.Run.Test_Runner_With_Status (Suite);
 
    Reporter : AUnit.Reporter.Text.Text_Reporter;
+   Result   : AUnit.Status;
 begin
    Put_Line ("========================================");
    Put_Line ("  AdaModbus Integration Test Suite");
@@ -44,10 +47,19 @@ begin
    Put_Line ("----------------------------------------");
    New_Line;
 
-   Run (Reporter);
+   Result := Run (Reporter);
 
    New_Line;
    Put_Line ("========================================");
-   Put_Line ("  Tests completed");
+   if Result = AUnit.Success then
+      Put_Line ("  Tests PASSED");
+   else
+      Put_Line ("  Tests FAILED");
+   end if;
    Put_Line ("========================================");
+
+   --  Set exit code based on test results
+   if Result /= AUnit.Success then
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+   end if;
 end Integration_Test_Runner;
