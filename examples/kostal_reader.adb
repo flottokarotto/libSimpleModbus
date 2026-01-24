@@ -235,12 +235,13 @@ procedure Kostal_Reader is
       end if;
 
       --  Read Temperature (regs 33-37)
+      --  Note: Temperature is signed int16 in SunSpec
       if Read_Registers (Slave, Model_Start + 33, 5, Temp_Regs) then
          declare
             Temp_SF : constant Scale_Factor := To_Scale_Factor (Temp_Regs (4));
          begin
             Put_Line ("  Cabinet Temp: " &
-                      Float'Image (Apply_Scale (Temp_Regs (0), Temp_SF)) & " C");
+                      Float'Image (Apply_Scale_Signed (Temp_Regs (0), Temp_SF)) & " C");
          end;
       end if;
 

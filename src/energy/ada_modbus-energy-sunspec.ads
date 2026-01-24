@@ -79,8 +79,14 @@ is
        9  => 1.0E9,
        10 => 1.0E10];
 
-   --  Apply scale factor to a register value
+   --  Apply scale factor to a register value (unsigned)
    function Apply_Scale (Value : Register_Value; SF : Scale_Factor) return Float
+     with Inline;
+
+   --  Apply scale factor to a signed register value (e.g., temperature)
+   --  SunSpec int16 values are stored as unsigned but represent signed data
+   function Apply_Scale_Signed
+     (Value : Register_Value; SF : Scale_Factor) return Float
      with Inline;
 
    --  SunSpec string (max 16 registers = 32 chars)

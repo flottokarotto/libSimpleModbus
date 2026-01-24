@@ -16,6 +16,24 @@ is
       return Float (Value) * Scale_Multipliers (SF);
    end Apply_Scale;
 
+   ------------------------
+   -- Apply_Scale_Signed --
+   ------------------------
+
+   function Apply_Scale_Signed
+     (Value : Register_Value; SF : Scale_Factor) return Float
+   is
+      Signed_Value : Integer;
+   begin
+      --  Convert unsigned 16-bit to signed (two's complement)
+      if Value > 32767 then
+         Signed_Value := Integer (Value) - 65536;
+      else
+         Signed_Value := Integer (Value);
+      end if;
+      return Float (Signed_Value) * Scale_Multipliers (SF);
+   end Apply_Scale_Signed;
+
    -------------------
    -- Decode_String --
    -------------------
