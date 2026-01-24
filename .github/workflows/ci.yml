@@ -80,6 +80,9 @@ jobs:
       - name: Select toolchain
         run: alr toolchain --select gnat_native^15 gprbuild
 
+      - name: Build library
+        run: alr build
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
