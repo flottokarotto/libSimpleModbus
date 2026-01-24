@@ -98,16 +98,14 @@ package body Integration_Tests is
       end if;
    end Ensure_Connected;
 
-   --  Helper: Skip test if not connected
-   procedure Skip_If_Not_Connected (T : Test_Case'Class) is
-      pragma Unreferenced (T);
+   --  Helper: Fail test if not connected
+   procedure Require_Connection is
    begin
       Ensure_Connected;
-      if not Is_Connected then
-         --  AUnit doesn't have skip, so we just note it
-         Assert (True, "SKIPPED: Simulator not available");
-      end if;
-   end Skip_If_Not_Connected;
+      Assert (Is_Connected,
+              "FAILED: Simulator not running at " & Simulator_Host & ":" &
+              Simulator_Port'Image & " - start with: python modbus_simulator.py --port 5020");
+   end Require_Connection;
 
    type Integration_Test_Case is new Test_Case with null record;
 
@@ -133,9 +131,7 @@ package body Integration_Tests is
       Values : Coil_Array (0 .. 7);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       Result := TCP_Master.Read_Coils
         (Ctx, Slave => Test_Slave_Id,
@@ -165,9 +161,7 @@ package body Integration_Tests is
       Values : Coil_Array (0 .. 8);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       Result := TCP_Master.Read_Discrete_Inputs
         (Ctx, Slave => Test_Slave_Id,
@@ -196,9 +190,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 4);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Read addresses 0-4 (sequential pattern: 0, 100, 200, 300, 400)
       Result := TCP_Master.Read_Holding_Registers
@@ -221,9 +213,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 5);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Read addresses 10-15 (test values)
       Result := TCP_Master.Read_Holding_Registers
@@ -251,9 +241,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 4);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Read addresses 0-4 (pattern: value = address + 1000)
       Result := TCP_Master.Read_Input_Registers
@@ -280,9 +268,7 @@ package body Integration_Tests is
       Read_Values : Coil_Array (0 .. 0);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Write ON to coil 50 (initially OFF since 50 is even)
       Result := TCP_Master.Write_Single_Coil
@@ -319,9 +305,7 @@ package body Integration_Tests is
       Result : Status;
       Original_Value : Register_Value;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Read original value at address 100
       Result := TCP_Master.Read_Holding_Registers
@@ -368,9 +352,7 @@ package body Integration_Tests is
       Read_Values : Coil_Array (0 .. 7);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Write pattern to coils 60-67
       Result := TCP_Master.Write_Multiple_Coils
@@ -410,9 +392,7 @@ package body Integration_Tests is
       Read_Values : Register_Array (0 .. 4);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Write to registers 120-124
       Result := TCP_Master.Write_Multiple_Registers
@@ -447,9 +427,7 @@ package body Integration_Tests is
       Read_Values : Register_Array (0 .. 0);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  First, set register 130 to a known value
       Result := TCP_Master.Write_Single_Register
@@ -499,9 +477,7 @@ package body Integration_Tests is
       Read_Values : Register_Array (0 .. 2);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Write to 140-142 and read from 10-12 in a single transaction
       Result := TCP_Master.Read_Write_Multiple_Registers
@@ -543,9 +519,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 124);  --  125 registers (max per Modbus spec)
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Read maximum number of registers
       Result := TCP_Master.Read_Holding_Registers
@@ -571,9 +545,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 9);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Try to read from a very high address (likely out of range)
       Result := TCP_Master.Read_Holding_Registers
@@ -597,9 +569,7 @@ package body Integration_Tests is
       Values : Register_Array (0 .. 0);
       Result : Status;
    begin
-      if not Is_Connected then
-         return;
-      end if;
+      Require_Connection;
 
       --  Try to communicate with a different slave ID
       --  Note: pymodbus might respond anyway, or timeout
