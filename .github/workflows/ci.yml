@@ -93,8 +93,30 @@ jobs:
 
       - name: Start Modbus Simulator
         run: |
-          python tests/integration/modbus_simulator.py --port 5020 &
-          sleep 2
+          nohup python tests/integration/modbus_simulator.py --port 5020 > simulator.log 2>&1 &
+          echo $! > simulator.pid
+          sleep 3
+
+      - name: Verify Simulator Running
+        run: |
+          echo "Checking if simulator is running..."
+          if ! ps -p $(cat simulator.pid) > /dev/null 2>&1; then
+            echo "ERROR: Simulator process died!"
+            cat simulator.log
+            exit 1
+          fi
+          echo "Checking if port 5020 is open..."
+          for i in 1 2 3 4 5; do
+            if nc -z localhost 5020 2>/dev/null; then
+              echo "SUCCESS: Simulator is listening on port 5020"
+              exit 0
+            fi
+            echo "Waiting for simulator (attempt $i)..."
+            sleep 1
+          done
+          echo "ERROR: Port 5020 is not open"
+          cat simulator.log
+          exit 1
 
       - name: Build integration tests
         run: alr exec -- gprbuild -P tests/integration/integration_tests.gpr
@@ -104,7 +126,15 @@ jobs:
 
       - name: Stop Modbus Simulator
         if: always()
-        run: pkill -f modbus_simulator.py || true
+        run: |
+          if [ -f simulator.pid ]; then
+            kill $(cat simulator.pid) 2>/dev/null || true
+          fi
+          pkill -f modbus_simulator.py || true
+          if [ -f simulator.log ]; then
+            echo "=== Simulator Log ==="
+            cat simulator.log
+          fi
 
   spark-verify:
     runs-on: ubuntu-latest
