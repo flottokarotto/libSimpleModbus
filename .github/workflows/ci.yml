@@ -52,6 +52,11 @@ jobs:
           files: coverage.info
           fail_ci_if_error: false
 
+      - name: Validate SunSpec offsets
+        run: |
+          python3 tools/sunspec_codegen.py --validate 103 src/energy/ada_modbus-energy-sunspec-inverter.ads
+          python3 tools/sunspec_codegen.py --validate 203 src/energy/ada_modbus-energy-sunspec-meter.ads
+
       - name: Build examples
         run: alr exec -- gprbuild -P examples/examples.gpr
 
