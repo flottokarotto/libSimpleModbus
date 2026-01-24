@@ -299,6 +299,11 @@ end;
 ./bin/ksem_dashboard <ip> [port] [unit]    # Live terminal dashboard
 ```
 
+<p align="center">
+  <img src="docs/screenshots/kostal_dashboard.png" alt="Kostal Inverter Dashboard" width="480">
+  <img src="docs/screenshots/ksem_dashboard.png" alt="KSEM Energy Meter Dashboard" width="480">
+</p>
+
 ### C Examples
 
 ```bash
