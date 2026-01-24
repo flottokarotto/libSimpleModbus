@@ -325,8 +325,10 @@ Copy these to your project:
 
 | File                          | Description                  |
 | ----------------------------- | ---------------------------- |
-| `lib/adamodbus.a`     | Static library               |
-| `src/c_api/ada_modbus.h` | C header (API documentation) |
+| `lib/libadamodbus.a`          | Static library               |
+| `src/c_api/ada_modbus.h`      | Base C header (TCP master/slave) |
+| `src/c_api/ada_modbus_sunspec.h` | SunSpec high-level API |
+| `src/c_api/ada_modbus_serial.h`  | Serial/RTU API |
 
 With **Light runtime**: No additional dependencies.
 With **Light-Tasking/Full**: Also link `-lgnat`.
@@ -344,10 +346,70 @@ gcc myapp.c -Llib -ladamodbus -lgnat -lpthread -o myapp
 arm-none-eabi-gcc myapp.c -Llib -ladamodbus -o firmware.elf
 ```
 
-### API
+### Base API
 
 See `src/c_api/ada_modbus.h` for full API documentation.
 See `examples/c/c_tcp_master.c` and `examples/c/c_tcp_slave.c` for usage examples.
+
+### SunSpec API
+
+High-level functions for SunSpec-compatible devices (inverters, meters, batteries):
+
+```c
+#include "ada_modbus.h"
+#include "ada_modbus_sunspec.h"
+
+void* master = modbus_master_create();
+modbus_master_connect(master, "192.168.1.100", 502, 5000);
+
+// Check for SunSpec support
+if (sunspec_check(master, 1, 40000) == MODBUS_SUCCESS) {
+    // Find inverter model (101-103)
+    sunspec_model_header_t header;
+    if (sunspec_find_model(master, 1, 40002, SUNSPEC_MODEL_INVERTER_3P, &header) == MODBUS_SUCCESS) {
+        sunspec_inverter_t inv;
+        sunspec_read_inverter(master, 1, header.address, &inv);
+        printf("AC Power: %.1f W\n", inv.ac_power_w);
+        printf("DC Voltage: %.1f V\n", inv.dc_voltage_v);
+    }
+
+    // Read meter data
+    if (sunspec_find_model(master, 1, 40002, SUNSPEC_MODEL_METER_3P_WYE, &header) == MODBUS_SUCCESS) {
+        sunspec_meter_t meter;
+        sunspec_read_meter(master, 1, header.address, &meter);
+        printf("Total Power: %.1f W\n", meter.total_power_w);
+    }
+}
+```
+
+### Serial/RTU API
+
+For Modbus RTU over RS-232/RS-485:
+
+```c
+#include "ada_modbus_serial.h"
+
+// Open serial port
+void* serial = modbus_serial_create();
+modbus_serial_open(serial, "COM3", 9600, 8, MODBUS_PARITY_NONE, MODBUS_STOP_1);
+
+// Create RTU master
+void* rtu = modbus_rtu_master_create(serial, 1, 1000);
+
+// Read registers
+uint16_t values[10];
+int result = modbus_rtu_read_holding_registers(rtu, 1, 0, 10, values, 1000);
+if (result == MODBUS_SUCCESS) {
+    for (int i = 0; i < 10; i++) {
+        printf("Register %d: %u\n", i, values[i]);
+    }
+}
+
+// Cleanup
+modbus_rtu_master_destroy(rtu);
+modbus_serial_close(serial);
+modbus_serial_destroy(serial);
+```
 
 ## Package Structure
 
@@ -366,6 +428,9 @@ Ada_Modbus                         -- Base types (Byte, Register, Status, etc.)
 ├── Ada_Modbus.Transport           -- Transport abstraction
 │   ├── Ada_Modbus.Transport.TCP   -- TCP socket backend
 │   └── Ada_Modbus.Transport.Serial -- Serial port (COM/TTY) backend
+├── Ada_Modbus.C_API               -- C bindings
+│   ├── Ada_Modbus.C_API.SunSpec   -- SunSpec high-level C API
+│   └── Ada_Modbus.C_API.Serial    -- Serial/RTU C API
 └── Ada_Modbus.Energy              -- Energy management extensions
     ├── Ada_Modbus.Energy.SG_Ready    -- Heat pump control (generic)
     ├── Ada_Modbus.Energy.Grid_Control -- §14a power limitation (generic)
