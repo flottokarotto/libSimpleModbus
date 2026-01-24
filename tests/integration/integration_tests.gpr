@@ -1,0 +1,50 @@
+--  Integration_Tests.gpr - GPRbuild project for Modbus TCP integration tests
+--  Copyright (c) 2026 Florian Fischer
+--  SPDX-License-Identifier: MIT
+--
+--  Build:
+--    alr build -- -P tests/integration/integration_tests.gpr
+--
+--  Or directly:
+--    gprbuild -P tests/integration/integration_tests.gpr
+
+with "aunit";
+
+project Integration_Tests is
+
+   --  Source directories
+   for Source_Dirs use (
+      ".",                           --  Integration test sources
+      "../../src/core",              --  Core library sources
+      "../../src/transport"          --  Transport sources
+   );
+
+   for Object_Dir use "../../obj/integration_tests";
+   for Exec_Dir use "../../bin";
+   for Main use ("integration_test_runner.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-gnat2022",      --  Ada 2022 language standard
+         "-gnatwa",        --  Enable all common warnings
+         "-gnatw.X",       --  Disable warnings for No_Exception_Propagation
+         "-gnatw_A",       --  Disable anonymous access type allocator warnings
+         "-g",             --  Generate debug information
+         "-O0");           --  No optimization for debugging
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");  --  Store traceback in exceptions
+   end Binder;
+
+   package Linker is
+      --  Link with network libraries on Windows
+      case external ("OS", "unix") is
+         when "Windows_NT" =>
+            for Default_Switches ("Ada") use ("-lws2_32");
+         when others =>
+            null;
+      end case;
+   end Linker;
+
+end Integration_Tests;
