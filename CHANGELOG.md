@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Build & Test
 - Alire package manager support
 - GitHub Actions CI (build, test, SPARK, embedded)
-- 104 unit tests with AUnit
+- 114 unit tests with AUnit
 - Code coverage with Codecov
 - SunSpec register offset validation
 
