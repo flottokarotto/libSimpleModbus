@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="AdaModbus" width="600">
+  <img src="logo.svg" alt="AdaModbus" width="450">
 </p>
 
 
