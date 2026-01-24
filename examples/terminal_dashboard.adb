@@ -192,21 +192,14 @@ package body Terminal_Dashboard is
       Width, Height : Positive;
       Title         : String := "")
    is
-      --  Box drawing characters (Unicode)
-      TL : constant String := "┌";
-      TR : constant String := "┐";
-      BL : constant String := "└";
-      BR : constant String := "┘";
-      H  : constant String := "─";
-      V  : constant String := "│";
    begin
       --  Top border
       Move_To (Top, Left);
-      Put (TL);
+      Put ('+');
       for I in 1 .. Width - 2 loop
-         Put (H);
+         Put ('-');
       end loop;
-      Put (TR);
+      Put ('+');
 
       --  Title if provided
       if Title'Length > 0 and Title'Length < Width - 4 then
@@ -217,18 +210,18 @@ package body Terminal_Dashboard is
       --  Sides
       for Row in Top + 1 .. Top + Height - 2 loop
          Move_To (Row, Left);
-         Put (V);
+         Put ('|');
          Move_To (Row, Left + Width - 1);
-         Put (V);
+         Put ('|');
       end loop;
 
       --  Bottom border
       Move_To (Top + Height - 1, Left);
-      Put (BL);
+      Put ('+');
       for I in 1 .. Width - 2 loop
-         Put (H);
+         Put ('-');
       end loop;
-      Put (BR);
+      Put ('+');
    end Draw_Box;
 
    ----------------
@@ -236,11 +229,10 @@ package body Terminal_Dashboard is
    ----------------
 
    procedure Draw_HLine (Row, Col : Positive; Width : Positive) is
-      H : constant String := "─";
    begin
       Move_To (Row, Col);
       for I in 1 .. Width loop
-         Put (H);
+         Put ('-');
       end loop;
    end Draw_HLine;
 
@@ -249,11 +241,10 @@ package body Terminal_Dashboard is
    ----------------
 
    procedure Draw_VLine (Row, Col : Positive; Height : Positive) is
-      V : constant String := "│";
    begin
       for R in Row .. Row + Height - 1 loop
          Move_To (R, Col);
-         Put (V);
+         Put ('|');
       end loop;
    end Draw_VLine;
 
@@ -267,8 +258,6 @@ package body Terminal_Dashboard is
       Percent  : Float;
       FG       : Color := Green)
    is
-      Fill_Char  : constant String := "█";
-      Empty_Char : constant String := "░";
       Pct        : Float := Percent;
       Fill_Width : Natural;
    begin
@@ -281,15 +270,17 @@ package body Terminal_Dashboard is
       Fill_Width := Natural (Pct * Float (Width) / 100.0);
 
       Move_To (Row, Col);
+      Put ('[');
       Set_Foreground (FG);
       for I in 1 .. Fill_Width loop
-         Put (Fill_Char);
+         Put ('#');
       end loop;
       Set_Foreground (Bright_Black);
       for I in Fill_Width + 1 .. Width loop
-         Put (Empty_Char);
+         Put ('.');
       end loop;
       Reset_Style;
+      Put (']');
    end Draw_Progress_Bar;
 
    ---------
