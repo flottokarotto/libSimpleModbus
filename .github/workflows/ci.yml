@@ -113,6 +113,9 @@ jobs:
         with:
           name: build-artifacts
 
+      - name: Sync Alire dependencies
+        run: alr update
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
