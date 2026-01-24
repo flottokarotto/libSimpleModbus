@@ -26,15 +26,16 @@ jobs:
           toolchain: gnat_native^15
           cache: true
 
-      - name: Cache Alire dependencies
+      - name: Cache Alire downloads
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/alire
-            alire
-          key: alire-native-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
+          path: ~/.cache/alire
+          key: alire-cache-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
           restore-keys: |
-            alire-native-${{ runner.os }}-
+            alire-cache-${{ runner.os }}-
+
+      - name: Select toolchain
+        run: alr toolchain --select gnat_native^15 gprbuild
 
       - name: Build library
         run: alr build
@@ -141,15 +142,16 @@ jobs:
           toolchain: gnat_native^15
           cache: true
 
-      - name: Cache Alire dependencies
+      - name: Cache Alire downloads
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/alire
-            alire
-          key: alire-native-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
+          path: ~/.cache/alire
+          key: alire-cache-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
           restore-keys: |
-            alire-native-${{ runner.os }}-
+            alire-cache-${{ runner.os }}-
+
+      - name: Select toolchain
+        run: alr toolchain --select gnat_native^15 gprbuild
 
       - name: Sync dependencies
         run: alr update
@@ -198,28 +200,19 @@ jobs:
           toolchain: gnat_arm_elf^15
           cache: true
 
-      - name: Cache Alire ARM dependencies
+      - name: Cache Alire ARM downloads
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/alire
-            examples/embedded/cortex_m4_lwip/alire
-            examples/embedded/stm32_rtu/alire
-          key: alire-arm-${{ runner.os }}-${{ hashFiles('examples/embedded/**/alire.toml') }}
+          path: ~/.cache/alire
+          key: alire-arm-cache-${{ runner.os }}-${{ hashFiles('examples/embedded/**/alire.toml') }}
           restore-keys: |
-            alire-arm-${{ runner.os }}-
+            alire-arm-cache-${{ runner.os }}-
 
-      - name: Cache QEMU
-        uses: actions/cache@v4
-        with:
-          path: /usr/bin/qemu-system-arm
-          key: qemu-arm-${{ runner.os }}
+      - name: Select ARM toolchain
+        run: alr toolchain --select gnat_arm_elf^15 gprbuild
 
       - name: Install QEMU
-        run: |
-          if ! command -v qemu-system-arm &> /dev/null; then
-            sudo apt-get update && sudo apt-get install -y qemu-system-arm
-          fi
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
 
       - name: Build embedded loopback example
         run: cd examples/embedded/cortex_m4_lwip && alr build
