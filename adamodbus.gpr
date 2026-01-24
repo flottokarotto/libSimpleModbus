@@ -1,6 +1,6 @@
 --  AdaModbus - Ada 2022 Modbus Library
 --
---  SPARK-verified core library for embedded and desktop systems.
+--  Modbus library with SPARK-verified protocol core.
 --  For TLS support, see the separate adamodbus_tls crate (tls/ subdirectory).
 --
 --  Configuration:
@@ -53,7 +53,43 @@ project Adamodbus is
          when "debug" =>
             for Default_Switches ("Ada") use Common_Switches & ("-g", "-O0");
          when "release" =>
-            for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            --  Default: Runtime-Checks bleiben aktiv für Non-SPARK Code
+            for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn");
+
+            --  SPARK-verifizierter Code: Runtime-Checks können sicher deaktiviert werden
+            --  (Nicht für Master, Slave, C_API, Transport - diese sind Non-SPARK)
+            for Switches ("ada_modbus.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-crc16.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-crc16.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-lrc.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-lrc.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-utilities.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-utilities.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-rtu.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-rtu.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-ascii.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-ascii.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-tcp.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-protocol-tcp.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-slave_generic.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-slave_generic.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-slave_stubs.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-slave_stubs.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-common.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-common.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-inverter.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-inverter.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-storage.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-storage.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sg_ready.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sg_ready.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-grid_control.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-grid_control.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
       end case;
    end Compiler;
 

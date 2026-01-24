@@ -7,7 +7,7 @@
 
 [![CI](https://github.com/flottokarotto/AdaModbus/actions/workflows/ci.yml/badge.svg)](https://github.com/flottokarotto/AdaModbus/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/flottokarotto/AdaModbus/graph/badge.svg)](https://codecov.io/gh/flottokarotto/AdaModbus)
-[![SPARK](https://img.shields.io/badge/SPARK-100%25%20proven-brightgreen)](https://www.adacore.com/about-spark)
+[![SPARK](https://img.shields.io/badge/SPARK-Protocol%20Core-blue)](https://www.adacore.com/about-spark)
 
 Ada 2022 Modbus library for embedded and desktop systems.
 
@@ -16,7 +16,7 @@ Ada 2022 Modbus library for embedded and desktop systems.
 - **Protocols**: Modbus RTU, ASCII, and TCP
 - **Roles**: Master (Client) and Slave (Server)
 - **ZFP-compatible core**: No tasking, exceptions, or dynamic allocation in protocol layer
-- **SPARK verified**: 100% of runtime checks formally proven (see below)
+- **SPARK verified**: Protocol core formally proven (see below)
 - **Energy management**: SunSpec, SG-Ready, and §14a grid control support
 - **Cross-platform**: Works on Windows, Linux, and embedded systems
 - **Transport abstraction**: Generic design allows custom transport backends
@@ -69,7 +69,16 @@ See [TESTING.md](TESTING.md) for test coverage documentation.
 
 ## Formal Verification (SPARK)
 
-The protocol core is formally verified using [SPARK](https://www.adacore.com/about-spark), a subset of Ada designed for high-assurance software.
+The protocol core and energy packages are formally verified using [SPARK](https://www.adacore.com/about-spark), a subset of Ada designed for high-assurance software.
+
+### What is verified?
+
+| Layer | SPARK | Runtime Checks (Release) |
+|-------|-------|--------------------------|
+| Protocol (PDU, RTU, ASCII, TCP) | Yes | Disabled (`-gnatp`) |
+| Energy (SunSpec, SG-Ready, Grid) | Yes | Disabled (`-gnatp`) |
+| Utilities (CRC16, LRC) | Yes | Disabled (`-gnatp`) |
+| Master, Slave, Transport, C-API | No | **Enabled** |
 
 ### Verification Results
 
@@ -80,7 +89,7 @@ The protocol core is formally verified using [SPARK](https://www.adacore.com/abo
 | Proven (Prover) | 438 (70%) |
 | Unproven | 0 (0%) |
 
-All runtime checks are formally proven, enabling safe compilation with `-gnatp` (suppress all checks) for maximum performance.
+All runtime checks in SPARK packages are formally proven, enabling safe compilation with `-gnatp`. Non-SPARK packages retain runtime checks.
 
 ### Verified Properties
 
@@ -98,8 +107,11 @@ All protocol and energy packages have `SPARK_Mode => On`:
 - `Ada_Modbus.Protocol.RTU/ASCII/TCP` - Framing layers
 - `Ada_Modbus.CRC16`, `Ada_Modbus.LRC` - Checksums
 - `Ada_Modbus.Utilities` - Byte order conversion
+- `Ada_Modbus.Slave_Generic`, `Ada_Modbus.Slave_Stubs` - Generic slave handlers
 - `Ada_Modbus.Energy.SunSpec` - SunSpec model discovery and utilities
 - `Ada_Modbus.Energy.SunSpec.Common/Inverter/Storage` - SunSpec device models
+- `Ada_Modbus.Energy.SG_Ready` - Heat pump control
+- `Ada_Modbus.Energy.Grid_Control` - §14a power limitation
 
 ### Running SPARK Analysis
 
@@ -353,10 +365,10 @@ Ada_Modbus                         -- Base types (Byte, Register, Status, etc.)
 ```
 AdaModbus/
 ├── src/
-│   ├── core/           -- Protocol core (ZFP-compatible)
-│   ├── transport/      -- Transport backends
-│   ├── energy/         -- Energy management (SunSpec, SG-Ready, §14a)
-│   └── c_api/          -- C interface
+│   ├── core/           -- Protocol + Master/Slave (mixed SPARK/Non-SPARK)
+│   ├── transport/      -- Transport backends (Non-SPARK)
+│   ├── energy/         -- Energy management (SPARK-verified)
+│   └── c_api/          -- C interface (Non-SPARK)
 ├── tls/                -- TLS extension (separate Alire crate)
 ├── tests/
 │   └── unit/           -- AUnit tests
