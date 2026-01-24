@@ -94,7 +94,7 @@ jobs:
           sleep 2
 
       - name: Build integration tests
-        run: alr build -- -P tests/integration/integration_tests.gpr
+        run: alr exec -- gprbuild -P tests/integration/integration_tests.gpr
 
       - name: Run integration tests
         run: ./bin/integration_test_runner
