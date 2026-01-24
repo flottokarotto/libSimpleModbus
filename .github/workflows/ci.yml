@@ -80,7 +80,6 @@ jobs:
           path: |
             bin/
             obj/
-            alire/
           retention-days: 1
 
   integration-tests:
@@ -108,9 +107,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: tests/integration/requirements.txt
 
       - name: Install pymodbus
-        run: python3 -m pip install pymodbus
+        run: python3 -m pip install -r tests/integration/requirements.txt
 
       - name: Start Modbus Simulator
         run: |
