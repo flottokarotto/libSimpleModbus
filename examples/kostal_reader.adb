@@ -14,6 +14,7 @@
 --           kostal_reader 192.168.1.50 1502 71
 
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Float_Text_IO;
 with Ada.Command_Line;
 with Ada.Calendar;
 with Ada.Exceptions;
@@ -149,6 +150,20 @@ procedure Kostal_Reader is
       end;
    end Read_Common_Model;
 
+   --  Format float without E notation (e.g., "1234.56" instead of "1.23456E+03")
+   function Fmt (Value : Float; Decimals : Natural := 2) return String is
+      Result : String (1 .. 20);
+   begin
+      Ada.Float_Text_IO.Put (Result, Value, Aft => Decimals, Exp => 0);
+      --  Trim leading spaces
+      for I in Result'Range loop
+         if Result (I) /= ' ' then
+            return Result (I .. Result'Last);
+         end if;
+      end loop;
+      return Result;
+   end Fmt;
+
    --  Convert unsigned register to signed scale factor
    --  SunSpec scale factors are signed 16-bit stored as unsigned
    function To_Scale_Factor (Reg : Register_Value) return Scale_Factor is
@@ -194,29 +209,36 @@ procedure Kostal_Reader is
             Freq_SF    : constant Scale_Factor := To_Scale_Factor (AC_Regs (15));
          begin
             Put_Line ("  AC Current:   " &
-                      Float'Image (Apply_Scale (AC_Regs (0), Current_SF)) & " A");
+                      Fmt (Apply_Scale (AC_Regs (0), Current_SF)) & " A");
             Put_Line ("  AC Voltage:   " &
-                      Float'Image (Apply_Scale (AC_Regs (8), Voltage_SF)) & " V");
+                      Fmt (Apply_Scale (AC_Regs (8), Voltage_SF), 1) & " V");
             Put_Line ("  AC Power:     " &
-                      Float'Image (Apply_Scale (AC_Regs (12), Power_SF)) & " W");
+                      Fmt (Apply_Scale (AC_Regs (12), Power_SF), 0) & " W");
             Put_Line ("  AC Frequency: " &
-                      Float'Image (Apply_Scale (AC_Regs (14), Freq_SF)) & " Hz");
+                      Fmt (Apply_Scale (AC_Regs (14), Freq_SF)) & " Hz");
          end;
       end if;
 
       --  Read DC measurements (regs 27-32)
+      --  Note: 0xFFFF = Not Implemented in SunSpec
       if Read_Registers (Slave, Model_Start + 27, 6, DC_Regs) then
          declare
             DC_A_SF : constant Scale_Factor := To_Scale_Factor (DC_Regs (1));
             DC_V_SF : constant Scale_Factor := To_Scale_Factor (DC_Regs (3));
             DC_W_SF : constant Scale_Factor := To_Scale_Factor (DC_Regs (5));
          begin
-            Put_Line ("  DC Current:   " &
-                      Float'Image (Apply_Scale (DC_Regs (0), DC_A_SF)) & " A");
-            Put_Line ("  DC Voltage:   " &
-                      Float'Image (Apply_Scale (DC_Regs (2), DC_V_SF)) & " V");
-            Put_Line ("  DC Power:     " &
-                      Float'Image (Apply_Scale (DC_Regs (4), DC_W_SF)) & " W");
+            if DC_Regs (0) /= 16#FFFF# then
+               Put_Line ("  DC Current:   " &
+                         Fmt (Apply_Scale (DC_Regs (0), DC_A_SF)) & " A");
+            end if;
+            if DC_Regs (2) /= 16#FFFF# then
+               Put_Line ("  DC Voltage:   " &
+                         Fmt (Apply_Scale (DC_Regs (2), DC_V_SF), 1) & " V");
+            end if;
+            if DC_Regs (4) /= 16#FFFF# then
+               Put_Line ("  DC Power:     " &
+                         Fmt (Apply_Scale (DC_Regs (4), DC_W_SF), 0) & " W");
+            end if;
          end;
       end if;
 
@@ -229,8 +251,7 @@ procedure Kostal_Reader is
             Energy_Wh  : constant Float :=
               Float (Energy_Raw) * Scale_Multipliers (Energy_SF);
          begin
-            Put_Line ("  Total Energy: " &
-                      Float'Image (Energy_Wh / 1000.0) & " kWh");
+            Put_Line ("  Total Energy: " & Fmt (Energy_Wh / 1000.0, 1) & " kWh");
          end;
       end if;
 
@@ -241,7 +262,7 @@ procedure Kostal_Reader is
             Temp_SF : constant Scale_Factor := To_Scale_Factor (Temp_Regs (4));
          begin
             Put_Line ("  Cabinet Temp: " &
-                      Float'Image (Apply_Scale_Signed (Temp_Regs (0), Temp_SF)) & " C");
+                      Fmt (Apply_Scale_Signed (Temp_Regs (0), Temp_SF), 1) & " C");
          end;
       end if;
 
@@ -265,6 +286,88 @@ procedure Kostal_Reader is
          end;
       end if;
    end Read_Inverter_Model;
+
+   --  Read and display MPPT Model (Model 160)
+   --  This provides per-string DC measurements
+   procedure Read_MPPT_Model
+     (Slave       : Unit_Id;
+      Model_Start : Register_Address;
+      Model_Len   : Natural)
+   is
+      --  Model 160 structure:
+      --  Offset 2: DCA_SF (int16) - Current scale factor
+      --  Offset 3: DCV_SF (int16) - Voltage scale factor
+      --  Offset 4: DCW_SF (int16) - Power scale factor
+      --  Offset 5: DCWH_SF (int16) - Energy scale factor
+      --  Offset 6: Evt (uint32) - Global events
+      --  Offset 8: N (uint16) - Number of modules
+      --  Offset 9: TmsPer (uint16) - Timestamp period
+      --  Offset 10+: Module data (20 registers each)
+      --    +0: ID (uint16)
+      --    +1: IDStr (string, 8 registers)
+      --    +9: DCA (uint16) - DC Current
+      --    +10: DCV (uint16) - DC Voltage
+      --    +11: DCW (uint16) - DC Power
+      --    +12: DCWH (uint32) - Lifetime energy
+      --    +14: Tms (uint32) - Timestamp
+      --    +16: Tmp (int16) - Temperature
+      --    +17: DCSt (uint16) - Operating state
+      --    +18: DCEvt (uint32) - Events
+
+      Header_Regs : Register_Array (0 .. 7);  --  Offsets 2-9
+      Module_Regs : Register_Array (0 .. 19); --  Per-module data
+      Module_Size : constant := 20;
+   begin
+      New_Line;
+      Put_Line ("--- MPPT Data (Model 160) ---");
+
+      --  Read header (scale factors and module count)
+      if not Read_Registers (Slave, Model_Start + 2, 8, Header_Regs) then
+         return;
+      end if;
+
+      declare
+         DCA_SF : constant Scale_Factor := To_Scale_Factor (Header_Regs (0));
+         DCV_SF : constant Scale_Factor := To_Scale_Factor (Header_Regs (1));
+         DCW_SF : constant Scale_Factor := To_Scale_Factor (Header_Regs (2));
+         Num_Modules : constant Natural := Natural (Header_Regs (6));
+         Module_Base : Register_Address := Model_Start + 10;
+      begin
+         Put_Line ("  Modules: " & Num_Modules'Image);
+
+         --  Read each module
+         for M in 1 .. Num_Modules loop
+            exit when Natural (Module_Base - Model_Start) + Module_Size > Model_Len + 2;
+
+            if Read_Registers (Slave, Module_Base, Module_Size, Module_Regs) then
+               declare
+                  Module_ID : constant Natural := Natural (Module_Regs (0));
+                  DC_Current : constant Float :=
+                    Apply_Scale (Module_Regs (9), DCA_SF);
+                  DC_Voltage : constant Float :=
+                    Apply_Scale (Module_Regs (10), DCV_SF);
+                  DC_Power : constant Float :=
+                    Apply_Scale (Module_Regs (11), DCW_SF);
+               begin
+                  New_Line;
+                  Put_Line ("  String " & Module_ID'Image & ":");
+
+                  if Module_Regs (9) /= 16#FFFF# then
+                     Put_Line ("    Current: " & Fmt (DC_Current) & " A");
+                  end if;
+                  if Module_Regs (10) /= 16#FFFF# then
+                     Put_Line ("    Voltage: " & Fmt (DC_Voltage, 1) & " V");
+                  end if;
+                  if Module_Regs (11) /= 16#FFFF# then
+                     Put_Line ("    Power:   " & Fmt (DC_Power, 0) & " W");
+                  end if;
+               end;
+            end if;
+
+            Module_Base := Module_Base + Module_Size;
+         end loop;
+      end;
+   end Read_MPPT_Model;
 
    --  Main variables
    Host     : String (1 .. 64) := [others => ' '];
@@ -367,6 +470,10 @@ begin
                   New_Line;
                   Put_Line ("--- Battery Storage (Model 124) found ---");
                   Put_Line ("  (Storage readout not implemented in this example)");
+
+               when 160 =>
+                  --  MPPT Model (per-string DC data)
+                  Read_MPPT_Model (Unit, Model_Start, Model_Len);
 
                when others =>
                   --  Skip unknown models
