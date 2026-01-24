@@ -42,7 +42,11 @@ project Adamodbus is
       "Ada_Modbus.Energy.SunSpec.Common",
       "Ada_Modbus.Energy.SunSpec.Inverter",
       "Ada_Modbus.Energy.SunSpec.Storage",
-      "Ada_Modbus.Energy.SunSpec.Meter");
+      "Ada_Modbus.Energy.SunSpec.Meter",
+      "Ada_Modbus.Energy.SunSpec.Nameplate",
+      "Ada_Modbus.Energy.SunSpec.Settings",
+      "Ada_Modbus.Energy.SunSpec.DER",
+      "Ada_Modbus.Energy.SunSpec.Battery");
 
    type Build_Mode_Type is ("debug", "release");
    Build_Mode : Build_Mode_Type := external ("ADAMODBUS_BUILD_MODE", "debug");
@@ -89,6 +93,14 @@ project Adamodbus is
             for Switches ("ada_modbus-energy-sunspec-storage.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
             for Switches ("ada_modbus-energy-sunspec-meter.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
             for Switches ("ada_modbus-energy-sunspec-meter.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-nameplate.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-nameplate.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-settings.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-settings.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-der.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-der.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-battery.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
+            for Switches ("ada_modbus-energy-sunspec-battery.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
             for Switches ("ada_modbus-energy-sg_ready.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
             for Switches ("ada_modbus-energy-sg_ready.adb") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
             for Switches ("ada_modbus-energy-grid_control.ads") use Common_Switches & ("-O2", "-gnatn", "-gnatp");
