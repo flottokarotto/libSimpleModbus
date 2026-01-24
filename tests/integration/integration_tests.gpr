@@ -12,6 +12,10 @@ with "aunit";
 
 project Integration_Tests is
 
+   --  OS detection for platform-specific linker options
+   type OS_Type is ("Windows_NT", "unix");
+   OS : OS_Type := external ("OS", "unix");
+
    --  Source directories
    for Source_Dirs use (
       ".",                           --  Integration test sources
@@ -39,10 +43,10 @@ project Integration_Tests is
 
    package Linker is
       --  Link with network libraries on Windows
-      case external ("OS", "unix") is
+      case OS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("-lws2_32");
-         when others =>
+         when "unix" =>
             null;
       end case;
    end Linker;
