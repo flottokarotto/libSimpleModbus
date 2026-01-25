@@ -112,17 +112,65 @@ package body Test_Utilities is
       Assert (Result = 16#FFFFFFFF#, "ABCD: max value");
    end Test_32bit_Big_Endian;
 
-   --  Test: 32-bit Mid-Little-Endian (CDAB) - word-swapped
-   procedure Test_32bit_Word_Swap (T : in Out Test_Case'Class);
-   procedure Test_32bit_Word_Swap (T : in Out Test_Case'Class) is
+   --  Test: 32-bit Little-Endian (DCBA) - fully byte-reversed
+   procedure Test_32bit_Little_Endian (T : in Out Test_Case'Class);
+   procedure Test_32bit_Little_Endian (T : in Out Test_Case'Class) is
       pragma Unreferenced (T);
       use type Interfaces.Unsigned_32;
       Result : Interfaces.Unsigned_32;
    begin
-      --  CDAB: Low word first, so 0x5678, 0x1234 -> 0x12345678
+      --  DCBA: bytes fully reversed
+      --  For 0x12345678: D=0x78, C=0x56, B=0x34, A=0x12
+      --  Input High=0x7856 (DC), Low=0x3412 (BA) -> 0x12345678
+      Result := To_Unsigned_32 (16#7856#, 16#3412#, Little_Endian);
+      Assert (Result = 16#12345678#, "DCBA: 0x7856, 0x3412 -> 0x12345678");
+
+      --  Additional test with different value
+      --  For 0xDEADBEEF: D=0xEF, C=0xBE, B=0xAD, A=0xDE
+      --  Input High=0xEFBE (DC), Low=0xADDE (BA) -> 0xDEADBEEF
+      Result := To_Unsigned_32 (16#EFBE#, 16#ADDE#, Little_Endian);
+      Assert (Result = 16#DEADBEEF#, "DCBA: 0xEFBE, 0xADDE -> 0xDEADBEEF");
+   end Test_32bit_Little_Endian;
+
+   --  Test: 32-bit Mid-Big-Endian (BADC) - bytes swapped within words
+   procedure Test_32bit_Mid_Big_Endian (T : in Out Test_Case'Class);
+   procedure Test_32bit_Mid_Big_Endian (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      use type Interfaces.Unsigned_32;
+      Result : Interfaces.Unsigned_32;
+   begin
+      --  BADC: bytes swapped within each word
+      --  For 0x12345678: B=0x34, A=0x12, D=0x78, C=0x56
+      --  Input High=0x3412 (BA), Low=0x7856 (DC) -> 0x12345678
+      Result := To_Unsigned_32 (16#3412#, 16#7856#, Mid_Big_Endian);
+      Assert (Result = 16#12345678#, "BADC: 0x3412, 0x7856 -> 0x12345678");
+
+      --  Additional test with different value
+      --  For 0xDEADBEEF: B=0xAD, A=0xDE, D=0xEF, C=0xBE
+      --  Input High=0xADDE (BA), Low=0xEFBE (DC) -> 0xDEADBEEF
+      Result := To_Unsigned_32 (16#ADDE#, 16#EFBE#, Mid_Big_Endian);
+      Assert (Result = 16#DEADBEEF#, "BADC: 0xADDE, 0xEFBE -> 0xDEADBEEF");
+   end Test_32bit_Mid_Big_Endian;
+
+   --  Test: 32-bit Mid-Little-Endian (CDAB) - word-swapped
+   procedure Test_32bit_Mid_Little_Endian (T : in Out Test_Case'Class);
+   procedure Test_32bit_Mid_Little_Endian (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      use type Interfaces.Unsigned_32;
+      Result : Interfaces.Unsigned_32;
+   begin
+      --  CDAB: Low word first, high word second
+      --  For 0x12345678: C=0x56, D=0x78, A=0x12, B=0x34
+      --  Input High=0x5678 (CD), Low=0x1234 (AB) -> 0x12345678
       Result := To_Unsigned_32 (16#5678#, 16#1234#, Mid_Little_Endian);
       Assert (Result = 16#12345678#, "CDAB: 0x5678, 0x1234 -> 0x12345678");
-   end Test_32bit_Word_Swap;
+
+      --  Additional test with different value
+      --  For 0xDEADBEEF: C=0xBE, D=0xEF, A=0xDE, B=0xAD
+      --  Input High=0xBEEF (CD), Low=0xDEAD (AB) -> 0xDEADBEEF
+      Result := To_Unsigned_32 (16#BEEF#, 16#DEAD#, Mid_Little_Endian);
+      Assert (Result = 16#DEADBEEF#, "CDAB: 0xBEEF, 0xDEAD -> 0xDEADBEEF");
+   end Test_32bit_Mid_Little_Endian;
 
    --  Test: 32-bit from Register_Array
    procedure Test_32bit_From_Array (T : in Out Test_Case'Class);
@@ -139,7 +187,7 @@ package body Test_Utilities is
       Assert (Result = 16#EF01ABCD#, "Array CDAB: 0xEF01ABCD");
    end Test_32bit_From_Array;
 
-   --  Test: 32-bit round-trip
+   --  Test: 32-bit round-trip for all word orders
    procedure Test_32bit_Round_Trip (T : in Out Test_Case'Class);
    procedure Test_32bit_Round_Trip (T : in Out Test_Case'Class) is
       pragma Unreferenced (T);
@@ -148,14 +196,53 @@ package body Test_Utilities is
       High, Low : Register_Value;
       Decoded  : Interfaces.Unsigned_32;
    begin
+      --  Test all 4 word orders for round-trip consistency
       From_Unsigned_32 (Original, High, Low, Big_Endian);
       Decoded := To_Unsigned_32 (High, Low, Big_Endian);
       Assert (Decoded = Original, "ABCD round-trip");
+
+      From_Unsigned_32 (Original, High, Low, Little_Endian);
+      Decoded := To_Unsigned_32 (High, Low, Little_Endian);
+      Assert (Decoded = Original, "DCBA round-trip");
+
+      From_Unsigned_32 (Original, High, Low, Mid_Big_Endian);
+      Decoded := To_Unsigned_32 (High, Low, Mid_Big_Endian);
+      Assert (Decoded = Original, "BADC round-trip");
 
       From_Unsigned_32 (Original, High, Low, Mid_Little_Endian);
       Decoded := To_Unsigned_32 (High, Low, Mid_Little_Endian);
       Assert (Decoded = Original, "CDAB round-trip");
    end Test_32bit_Round_Trip;
+
+   --  Test: From_Unsigned_32 produces correct word values for all orders
+   procedure Test_From_Unsigned_32_All_Orders (T : in Out Test_Case'Class);
+   procedure Test_From_Unsigned_32_All_Orders (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      use type Interfaces.Unsigned_32;
+      --  Test value 0x12345678: A=0x12, B=0x34, C=0x56, D=0x78
+      Value : constant Interfaces.Unsigned_32 := 16#12345678#;
+      High, Low : Register_Value;
+   begin
+      --  Big-Endian (ABCD): High=AB=0x1234, Low=CD=0x5678
+      From_Unsigned_32 (Value, High, Low, Big_Endian);
+      Assert (High = 16#1234#, "ABCD High should be 0x1234");
+      Assert (Low = 16#5678#, "ABCD Low should be 0x5678");
+
+      --  Little-Endian (DCBA): High=DC=0x7856, Low=BA=0x3412
+      From_Unsigned_32 (Value, High, Low, Little_Endian);
+      Assert (High = 16#7856#, "DCBA High should be 0x7856");
+      Assert (Low = 16#3412#, "DCBA Low should be 0x3412");
+
+      --  Mid-Big-Endian (BADC): High=BA=0x3412, Low=DC=0x7856
+      From_Unsigned_32 (Value, High, Low, Mid_Big_Endian);
+      Assert (High = 16#3412#, "BADC High should be 0x3412");
+      Assert (Low = 16#7856#, "BADC Low should be 0x7856");
+
+      --  Mid-Little-Endian (CDAB): High=CD=0x5678, Low=AB=0x1234
+      From_Unsigned_32 (Value, High, Low, Mid_Little_Endian);
+      Assert (High = 16#5678#, "CDAB High should be 0x5678");
+      Assert (Low = 16#1234#, "CDAB Low should be 0x1234");
+   end Test_From_Unsigned_32_All_Orders;
 
    overriding procedure Register_Tests (T : in Out Utilities_Test_Case) is
    begin
@@ -166,9 +253,12 @@ package body Test_Utilities is
       Registration.Register_Routine (T, Test_Low_Byte'Access, "Low_Byte");
       Registration.Register_Routine (T, Test_Round_Trip'Access, "Round-trip conversion");
       Registration.Register_Routine (T, Test_32bit_Big_Endian'Access, "32-bit Big-Endian (ABCD)");
-      Registration.Register_Routine (T, Test_32bit_Word_Swap'Access, "32-bit Word-Swap (CDAB)");
+      Registration.Register_Routine (T, Test_32bit_Little_Endian'Access, "32-bit Little-Endian (DCBA)");
+      Registration.Register_Routine (T, Test_32bit_Mid_Big_Endian'Access, "32-bit Mid-Big-Endian (BADC)");
+      Registration.Register_Routine (T, Test_32bit_Mid_Little_Endian'Access, "32-bit Mid-Little-Endian (CDAB)");
       Registration.Register_Routine (T, Test_32bit_From_Array'Access, "32-bit from Register_Array");
-      Registration.Register_Routine (T, Test_32bit_Round_Trip'Access, "32-bit round-trip");
+      Registration.Register_Routine (T, Test_32bit_Round_Trip'Access, "32-bit round-trip (all orders)");
+      Registration.Register_Routine (T, Test_From_Unsigned_32_All_Orders'Access, "From_Unsigned_32 (all orders)");
    end Register_Tests;
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
