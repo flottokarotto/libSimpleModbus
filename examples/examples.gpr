@@ -14,7 +14,8 @@ project Examples is
                   "diagnostics_demo.adb", "data_logger.adb",
                   "device_simulator.adb", "kostal_reader.adb",
                   "ksem_reader.adb", "kostal_dashboard.adb",
-                  "ksem_dashboard.adb", "go_e_dashboard.adb");
+                  "ksem_dashboard.adb", "go_e_dashboard.adb",
+                 "go_e_simulator.adb");
 
    package Compiler is
       --  Inherit common switches from main library, plus debug flags:
