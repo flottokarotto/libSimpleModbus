@@ -88,6 +88,12 @@ is
       --  Extract length field
       Length_Field := Natural (From_Big_Endian (ADU (4), ADU (5)));
 
+      --  Validate length field bounds (max PDU + Unit ID = 254)
+      if Length_Field < 2 or else Length_Field > Max_PDU_Size + 1 then
+         Result := Frame_Error;
+         return;
+      end if;
+
       --  Verify length consistency
       if ADU_Length /= MBAP_Header_Size - 1 + Length_Field then
          Result := Frame_Error;

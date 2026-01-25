@@ -256,12 +256,20 @@ is
 
       declare
          Byte_Count : constant Natural := Natural (Buffer (1));
-         Bit_Count  : constant Natural := Natural'Min (Byte_Count * 8, Values'Length);
+         Bit_Count  : Natural;
       begin
+         --  Validate Byte_Count bounds (max 250 data bytes in PDU)
+         if Byte_Count > Max_PDU_Size - 2 then
+            Response := Frame_Error;
+            return;
+         end if;
+
          if Length < 2 + Byte_Count then
             Response := Frame_Error;
             return;
          end if;
+
+         Bit_Count := Natural'Min (Byte_Count * 8, Values'Length);
 
          for I in 0 .. Bit_Count - 1 loop
             pragma Loop_Invariant (Values'First + I <= Values'Last);
@@ -308,12 +316,20 @@ is
 
       declare
          Byte_Count : constant Natural := Natural (Buffer (1));
-         Reg_Count  : constant Natural := Byte_Count / 2;
+         Reg_Count  : Natural;
       begin
+         --  Validate Byte_Count bounds (max 250 data bytes in PDU)
+         if Byte_Count > Max_PDU_Size - 2 then
+            Response := Frame_Error;
+            return;
+         end if;
+
          if Length < 2 + Byte_Count then
             Response := Frame_Error;
             return;
          end if;
+
+         Reg_Count := Byte_Count / 2;
 
          for I in 0 .. Natural'Min (Reg_Count, Values'Length) - 1 loop
             pragma Loop_Invariant (I < Natural'Min (Reg_Count, Values'Length));

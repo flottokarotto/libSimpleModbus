@@ -205,6 +205,7 @@ private
       Req_Length : Natural;
       Response   : out Protocol.PDU_Buffer;
       Resp_Len   : out Natural;
-      Timeout_Ms : Natural) return Status;
+      Timeout_Ms : Natural) return Status
+     with Pre => Req_Length > 0 and then Req_Length <= Protocol.Max_PDU_Size;
 
 end Ada_Modbus.Master;
