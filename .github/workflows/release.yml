@@ -86,10 +86,9 @@ jobs:
 
       - name: Build library (release)
         run: |
-          # Build library for ARM Cortex-M4 (ZFP runtime, no OS dependencies)
-          gprbuild -P adamodbus.gpr -XADAMODBUS_BUILD_MODE=release \
-            --target=arm-eabi --RTS=light-cortex-m4 \
-            -XGPR_TOOL=gprbuild -j0
+          # Build library for ARM Cortex-M4 (light runtime, no OS dependencies)
+          alr exec -- gprbuild -P adamodbus.gpr -XADAMODBUS_BUILD_MODE=release \
+            --target=arm-eabi --RTS=light-cortex-m4 -j0
 
       - name: Create ARM package
         run: |
