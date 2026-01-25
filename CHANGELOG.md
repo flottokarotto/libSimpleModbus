@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-25
+
+### Added
+
+- **go-e Charger support**: New `Ada_Modbus.Energy.Go_E` package for go-e wallbox
+- **go-e Dashboard**: Terminal-based live dashboard (`go_e_dashboard`)
+- **go-e Simulator**: Modbus TCP simulator for testing without hardware
+- **SunSpec Meter**: L-L voltage field (`Total_Voltage_LL`)
+- **Integration tests**: Python-based Modbus simulator tests
+- **C example**: `modbus_client.c` with comprehensive documentation
+
+### Changed
+
+- **KSEM Dashboard**: Shows L-L average voltage (~400V) from SunSpec register
+- **Power bar**: Uses cable rating as maximum instead of current limit
+- **CI**: Cached apt packages (lcov, qemu) for faster builds
+- **Protocol types**: Replaced preconditions with custom subtypes (`PDU_Data_Length`, `ADU_Data_Length`)
+
+### Fixed
+
+- **go-e Simulator**: Power total calculation (was 10× too low)
+- **go-e Dashboard**: Voltage labels layout overlap
+- **KSEM Dashboard**: Average voltage calculation (was showing ~330V instead of ~230V)
+- **SPARK proofs**: Overflow issues in Go_E package with `Unsigned_32` types
+
 ## [1.0.0] - 2026-01-24
 
 ### Added
@@ -65,4 +90,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 32-bit word order support (ABCD, CDAB, BADC, DCBA)
 - Signed scale factor support for SunSpec
 
+[1.1.0]: https://github.com/flottokarotto/AdaModbus/releases/tag/v1.1.0
 [1.0.0]: https://github.com/flottokarotto/AdaModbus/releases/tag/v1.0.0
