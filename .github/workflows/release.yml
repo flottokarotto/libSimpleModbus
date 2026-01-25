@@ -87,7 +87,7 @@ jobs:
       - name: Build library (release)
         run: |
           # Build library for ARM Cortex-M4 (light runtime, no OS dependencies)
-          alr exec -- gprbuild -P adamodbus.gpr -XADAMODBUS_BUILD_MODE=release \
+          alr exec -- gprbuild -P adamodbus_embedded.gpr -XADAMODBUS_BUILD_MODE=release \
             --target=arm-eabi --RTS=light-cortex-m4 -j0
 
       - name: Create ARM package
@@ -95,18 +95,16 @@ jobs:
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
 
-          # Ada library
+          # Ada library (embedded build outputs to lib/embedded)
           mkdir -p release/arm-ada/lib release/arm-ada/include
-          cp lib/libadamodbus.a release/arm-ada/lib/
-          cp lib/*.ali release/arm-ada/lib/
+          cp lib/embedded/libadamodbus.a release/arm-ada/lib/
+          cp lib/embedded/*.ali release/arm-ada/lib/
           cp src/core/*.ads release/arm-ada/include/
-          cp src/transport/*.ads release/arm-ada/include/
           cp src/energy/*.ads release/arm-ada/include/
-          cp src/c_api/*.ads release/arm-ada/include/ 2>/dev/null || true
 
-          # C API
+          # C API (same library, different headers)
           mkdir -p release/arm-c/lib release/arm-c/include
-          cp lib/libadamodbus.a release/arm-c/lib/
+          cp lib/embedded/libadamodbus.a release/arm-c/lib/
           cp src/c_api/*.h release/arm-c/include/
 
           echo "ARM Ada library contents:"
