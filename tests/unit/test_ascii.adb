@@ -136,6 +136,186 @@ package body Test_ASCII is
       Assert (PDU (0) = 16#03#, "FC should be 0x03");
    end Test_Parse_Valid_Frame;
 
+   --  Test: Parse errors - frame too short
+   procedure Test_Parse_Frame_Too_Short (T : in Out Test_Case'Class);
+   procedure Test_Parse_Frame_Too_Short (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('0');
+      Frame (2) := Character'Pos ('1');
+      Frame (3) := Frame_CR;
+      Frame (4) := Frame_LF;
+
+      Parse_Frame (Frame, 5, Slave, PDU, PDU_Len, Result);  --  < 9 chars
+      Assert (Result = Frame_Error, "Frame too short should fail");
+   end Test_Parse_Frame_Too_Short;
+
+   --  Test: Parse errors - missing start character
+   procedure Test_Parse_No_Start_Char (T : in Out Test_Case'Class);
+   procedure Test_Parse_No_Start_Char (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      --  9 chars but no ':' at start
+      Frame (0) := Character'Pos ('0');  --  Wrong start
+      Frame (1) := Character'Pos ('1');
+      Frame (2) := Character'Pos ('0');
+      Frame (3) := Character'Pos ('3');
+      Frame (4) := Character'Pos ('F');
+      Frame (5) := Character'Pos ('C');
+      Frame (6) := Frame_CR;
+      Frame (7) := Frame_LF;
+
+      Parse_Frame (Frame, 9, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Missing start char should fail");
+   end Test_Parse_No_Start_Char;
+
+   --  Test: Parse errors - bad end characters
+   procedure Test_Parse_Bad_End_Chars (T : in Out Test_Case'Class);
+   procedure Test_Parse_Bad_End_Chars (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('0');
+      Frame (2) := Character'Pos ('1');
+      Frame (3) := Character'Pos ('0');
+      Frame (4) := Character'Pos ('3');
+      Frame (5) := Character'Pos ('F');
+      Frame (6) := Character'Pos ('C');
+      Frame (7) := Character'Pos ('X');  --  Wrong: not CR
+      Frame (8) := Frame_LF;
+
+      Parse_Frame (Frame, 9, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Bad end chars should fail");
+   end Test_Parse_Bad_End_Chars;
+
+   --  Test: Parse errors - odd number of hex chars
+   procedure Test_Parse_Odd_Hex_Count (T : in Out Test_Case'Class);
+   procedure Test_Parse_Odd_Hex_Count (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      --  10 chars total = : + 5 hex + CR LF  (5 hex is odd)
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('0');
+      Frame (2) := Character'Pos ('1');
+      Frame (3) := Character'Pos ('0');
+      Frame (4) := Character'Pos ('3');
+      Frame (5) := Character'Pos ('F');
+      Frame (6) := Character'Pos ('C');
+      Frame (7) := Character'Pos ('A');  --  7 hex chars (odd)
+      Frame (8) := Frame_CR;
+      Frame (9) := Frame_LF;
+
+      Parse_Frame (Frame, 10, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Odd hex count should fail");
+   end Test_Parse_Odd_Hex_Count;
+
+   --  Test: Parse errors - invalid hex character
+   procedure Test_Parse_Invalid_Hex (T : in Out Test_Case'Class);
+   procedure Test_Parse_Invalid_Hex (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('0');
+      Frame (2) := Character'Pos ('1');
+      Frame (3) := Character'Pos ('G');  --  Invalid hex 'G'
+      Frame (4) := Character'Pos ('3');
+      Frame (5) := Character'Pos ('F');
+      Frame (6) := Character'Pos ('C');
+      Frame (7) := Frame_CR;
+      Frame (8) := Frame_LF;
+
+      Parse_Frame (Frame, 9, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Invalid hex char should fail");
+   end Test_Parse_Invalid_Hex;
+
+   --  Test: Parse errors - bad LRC
+   procedure Test_Parse_Bad_LRC (T : in Out Test_Case'Class);
+   procedure Test_Parse_Bad_LRC (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      --  :0103AA (valid format but wrong LRC)
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('0');
+      Frame (2) := Character'Pos ('1');
+      Frame (3) := Character'Pos ('0');
+      Frame (4) := Character'Pos ('3');
+      Frame (5) := Character'Pos ('A');
+      Frame (6) := Character'Pos ('A');  --  Wrong LRC
+      Frame (7) := Frame_CR;
+      Frame (8) := Frame_LF;
+
+      Parse_Frame (Frame, 9, Slave, PDU, PDU_Len, Result);
+      Assert (Result = LRC_Error, "Bad LRC should fail");
+   end Test_Parse_Bad_LRC;
+
+   --  Test: Parse errors - invalid Unit_Id (> 247)
+   procedure Test_Parse_Invalid_Unit_Id (T : in Out Test_Case'Class);
+   procedure Test_Parse_Invalid_Unit_Id (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Frame   : Frame_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      --  Unit ID F8 = 248 > 247, with correct LRC
+      --  Data: F8 03, LRC = -(F8+03) mod 256 = 05
+      Frame (0) := Frame_Start;
+      Frame (1) := Character'Pos ('F');
+      Frame (2) := Character'Pos ('8');  --  248
+      Frame (3) := Character'Pos ('0');
+      Frame (4) := Character'Pos ('3');
+      Frame (5) := Character'Pos ('0');
+      Frame (6) := Character'Pos ('5');  --  LRC
+      Frame (7) := Frame_CR;
+      Frame (8) := Frame_LF;
+
+      Parse_Frame (Frame, 9, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Unit ID > 247 should fail");
+   end Test_Parse_Invalid_Unit_Id;
+
+   --  Test: Hex_Nibble with invalid char returns 0
+   procedure Test_Hex_Nibble_Invalid (T : in Out Test_Case'Class);
+   procedure Test_Hex_Nibble_Invalid (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      Result : Byte;
+   begin
+      --  Hex_To_Byte internally calls Hex_Nibble which returns 0 for invalid
+      Result := Hex_To_Byte (Character'Pos ('Z'), Character'Pos ('Z'));
+      Assert (Result = 0, "'ZZ' should convert to 0");
+   end Test_Hex_Nibble_Invalid;
+
    --  Test: Round-trip build and parse
    procedure Test_Round_Trip (T : in Out Test_Case'Class);
    procedure Test_Round_Trip (T : in Out Test_Case'Class) is
@@ -173,6 +353,15 @@ package body Test_ASCII is
       Registration.Register_Routine (T, Test_Build_Frame'Access, "Build ASCII frame");
       Registration.Register_Routine (T, Test_Parse_Valid_Frame'Access, "Parse valid frame");
       Registration.Register_Routine (T, Test_Round_Trip'Access, "Round-trip");
+      --  Error path tests
+      Registration.Register_Routine (T, Test_Parse_Frame_Too_Short'Access, "Frame too short");
+      Registration.Register_Routine (T, Test_Parse_No_Start_Char'Access, "Missing start char");
+      Registration.Register_Routine (T, Test_Parse_Bad_End_Chars'Access, "Bad end chars");
+      Registration.Register_Routine (T, Test_Parse_Odd_Hex_Count'Access, "Odd hex count");
+      Registration.Register_Routine (T, Test_Parse_Invalid_Hex'Access, "Invalid hex char");
+      Registration.Register_Routine (T, Test_Parse_Bad_LRC'Access, "Bad LRC");
+      Registration.Register_Routine (T, Test_Parse_Invalid_Unit_Id'Access, "Invalid Unit ID");
+      Registration.Register_Routine (T, Test_Hex_Nibble_Invalid'Access, "Hex_Nibble invalid");
    end Register_Tests;
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite is

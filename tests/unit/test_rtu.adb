@@ -108,6 +108,27 @@ package body Test_RTU is
       Assert (Result = Frame_Error, "Should fail for frame < 4 bytes");
    end Test_Frame_Too_Short;
 
+   --  Test: Invalid Unit ID (> 247)
+   procedure Test_Invalid_Unit_Id (T : in Out Test_Case'Class);
+   procedure Test_Invalid_Unit_Id (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU     : ADU_Buffer := [others => 0];
+      PDU     : PDU_Buffer;
+      Slave   : Unit_Id;
+      PDU_Len : Natural;
+      Result  : Status;
+   begin
+      --  Unit ID 248 > 247, need valid CRC
+      --  Frame: F8 03 + CRC (0x7102)
+      ADU (0) := 16#F8#;  --  248 > 247
+      ADU (1) := 16#03#;  --  FC
+      ADU (2) := 16#02#;  --  CRC Low
+      ADU (3) := 16#71#;  --  CRC High
+
+      Parse_Frame (ADU, 4, Slave, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Unit ID > 247 should fail");
+   end Test_Invalid_Unit_Id;
+
    --  Test: Round-trip build and parse
    procedure Test_Round_Trip (T : in Out Test_Case'Class);
    procedure Test_Round_Trip (T : in Out Test_Case'Class) is
@@ -144,6 +165,7 @@ package body Test_RTU is
       Registration.Register_Routine (T, Test_Parse_Valid_Frame'Access, "Parse valid frame");
       Registration.Register_Routine (T, Test_Parse_Invalid_CRC'Access, "Parse invalid CRC");
       Registration.Register_Routine (T, Test_Frame_Too_Short'Access, "Frame too short");
+      Registration.Register_Routine (T, Test_Invalid_Unit_Id'Access, "Invalid Unit ID");
       Registration.Register_Routine (T, Test_Round_Trip'Access, "Round-trip");
    end Register_Tests;
 

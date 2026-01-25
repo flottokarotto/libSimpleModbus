@@ -151,6 +151,117 @@ package body Test_TCP is
       Assert (Get_Expected_Length (ADU) = 7, "Expected length should be 7 (6 MBAP + 1)");
    end Test_Get_Expected_Length;
 
+   --  Test: Frame too short
+   procedure Test_Frame_Too_Short (T : in Out Test_Case'Class);
+   procedure Test_Frame_Too_Short (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU         : ADU_Buffer := [others => 0];
+      PDU         : PDU_Buffer;
+      Transaction : Transaction_Id;
+      Unit        : Unit_Id;
+      PDU_Len     : Natural;
+      Result      : Status;
+   begin
+      Parse_Frame (ADU, 7, Transaction, Unit, PDU, PDU_Len, Result);  --  < 8
+      Assert (Result = Frame_Error, "Frame too short should fail");
+   end Test_Frame_Too_Short;
+
+   --  Test: Length field too small (< 2)
+   procedure Test_Length_Field_Too_Small (T : in Out Test_Case'Class);
+   procedure Test_Length_Field_Too_Small (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU         : ADU_Buffer := [others => 0];
+      PDU         : PDU_Buffer;
+      Transaction : Transaction_Id;
+      Unit        : Unit_Id;
+      PDU_Len     : Natural;
+      Result      : Status;
+   begin
+      ADU (0) := 16#00#;
+      ADU (1) := 16#01#;
+      ADU (2) := 16#00#;
+      ADU (3) := 16#00#;  --  Valid protocol ID
+      ADU (4) := 16#00#;
+      ADU (5) := 16#01#;  --  Length = 1 (< 2, invalid)
+      ADU (6) := 16#01#;
+      ADU (7) := 16#03#;
+
+      Parse_Frame (ADU, 8, Transaction, Unit, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Length field < 2 should fail");
+   end Test_Length_Field_Too_Small;
+
+   --  Test: Length field too large (> 254)
+   procedure Test_Length_Field_Too_Large (T : in Out Test_Case'Class);
+   procedure Test_Length_Field_Too_Large (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU         : ADU_Buffer := [others => 0];
+      PDU         : PDU_Buffer;
+      Transaction : Transaction_Id;
+      Unit        : Unit_Id;
+      PDU_Len     : Natural;
+      Result      : Status;
+   begin
+      ADU (0) := 16#00#;
+      ADU (1) := 16#01#;
+      ADU (2) := 16#00#;
+      ADU (3) := 16#00#;
+      ADU (4) := 16#00#;
+      ADU (5) := 16#FF#;  --  Length = 255 (> 254, invalid)
+      ADU (6) := 16#01#;
+      ADU (7) := 16#03#;
+
+      Parse_Frame (ADU, 8, Transaction, Unit, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Length field > 254 should fail");
+   end Test_Length_Field_Too_Large;
+
+   --  Test: Length field mismatch with actual ADU length
+   procedure Test_Length_Mismatch (T : in Out Test_Case'Class);
+   procedure Test_Length_Mismatch (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU         : ADU_Buffer := [others => 0];
+      PDU         : PDU_Buffer;
+      Transaction : Transaction_Id;
+      Unit        : Unit_Id;
+      PDU_Len     : Natural;
+      Result      : Status;
+   begin
+      ADU (0) := 16#00#;
+      ADU (1) := 16#01#;
+      ADU (2) := 16#00#;
+      ADU (3) := 16#00#;
+      ADU (4) := 16#00#;
+      ADU (5) := 16#06#;  --  Length = 6 -> expect 12 bytes total
+      ADU (6) := 16#01#;
+      ADU (7) := 16#03#;
+
+      Parse_Frame (ADU, 10, Transaction, Unit, PDU, PDU_Len, Result);  --  10 /= 12
+      Assert (Result = Frame_Error, "Length mismatch should fail");
+   end Test_Length_Mismatch;
+
+   --  Test: Invalid Unit ID (> 247)
+   procedure Test_Invalid_Unit_Id (T : in Out Test_Case'Class);
+   procedure Test_Invalid_Unit_Id (T : in Out Test_Case'Class) is
+      pragma Unreferenced (T);
+      ADU         : ADU_Buffer := [others => 0];
+      PDU         : PDU_Buffer;
+      Transaction : Transaction_Id;
+      Unit        : Unit_Id;
+      PDU_Len     : Natural;
+      Result      : Status;
+   begin
+      ADU (0) := 16#00#;
+      ADU (1) := 16#01#;
+      ADU (2) := 16#00#;
+      ADU (3) := 16#00#;
+      ADU (4) := 16#00#;
+      ADU (5) := 16#02#;  --  Length = 2
+      ADU (6) := 16#F8#;  --  Unit ID = 248 > 247
+      ADU (7) := 16#03#;
+
+      Parse_Frame (ADU, 8, Transaction, Unit, PDU, PDU_Len, Result);
+      Assert (Result = Frame_Error, "Unit ID > 247 should fail");
+   end Test_Invalid_Unit_Id;
+
    --  Test: Round-trip build and parse
    procedure Test_Round_Trip (T : in Out Test_Case'Class);
    procedure Test_Round_Trip (T : in Out Test_Case'Class) is
@@ -191,6 +302,12 @@ package body Test_TCP is
       Registration.Register_Routine (T, Test_Get_Transaction_Id'Access, "Get_Transaction_Id");
       Registration.Register_Routine (T, Test_Get_Expected_Length'Access, "Get_Expected_Length");
       Registration.Register_Routine (T, Test_Round_Trip'Access, "Round-trip");
+      --  Error path tests
+      Registration.Register_Routine (T, Test_Frame_Too_Short'Access, "Frame too short");
+      Registration.Register_Routine (T, Test_Length_Field_Too_Small'Access, "Length field too small");
+      Registration.Register_Routine (T, Test_Length_Field_Too_Large'Access, "Length field too large");
+      Registration.Register_Routine (T, Test_Length_Mismatch'Access, "Length mismatch");
+      Registration.Register_Routine (T, Test_Invalid_Unit_Id'Access, "Invalid Unit ID");
    end Register_Tests;
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
