@@ -46,8 +46,11 @@ jobs:
       - name: Run tests
         run: ./bin/test_runner
 
-      - name: Install lcov
-        run: sudo apt-get update && sudo apt-get install -y lcov
+      - name: Install lcov (cached)
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lcov
+          version: 1.0
 
       - name: Generate coverage report
         run: |
@@ -225,8 +228,11 @@ jobs:
       - name: Select ARM toolchain
         run: alr toolchain --select gnat_arm_elf^15 gprbuild
 
-      - name: Install QEMU
-        run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
+      - name: Install QEMU (cached)
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: qemu-system-arm
+          version: 1.0
 
       - name: Build embedded loopback example
         run: cd examples/embedded/cortex_m4_lwip && alr build
