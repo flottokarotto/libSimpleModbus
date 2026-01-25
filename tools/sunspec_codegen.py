@@ -16,6 +16,7 @@ Output is written to stdout as Ada code.
 import json
 import sys
 import urllib.request
+import urllib.error
 from typing import Any
 
 SUNSPEC_BASE_URL = "https://raw.githubusercontent.com/sunspec/models/master/json"
@@ -27,8 +28,17 @@ def fetch_model(model_id: int) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(url, timeout=10) as response:
             return json.loads(response.read().decode("utf-8"))
-    except Exception as e:
-        print(f"-- Error fetching model {model_id}: {e}", file=sys.stderr)
+    except urllib.error.HTTPError as e:
+        print(f"-- HTTP error fetching model {model_id}: {e.code} {e.reason}", file=sys.stderr)
+        sys.exit(1)
+    except urllib.error.URLError as e:
+        print(f"-- Network error fetching model {model_id}: {e.reason}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"-- JSON parse error for model {model_id}: {e}", file=sys.stderr)
+        sys.exit(1)
+    except TimeoutError:
+        print(f"-- Timeout fetching model {model_id}", file=sys.stderr)
         sys.exit(1)
 
 
