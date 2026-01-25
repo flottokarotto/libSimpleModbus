@@ -53,10 +53,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path release/ada-lib/include
           Copy-Item lib/libadamodbus.a release/ada-lib/lib/
           Copy-Item lib/*.ali release/ada-lib/lib/
-          Copy-Item src/core/*.ads release/ada-lib/include/
-          Copy-Item src/transport/*.ads release/ada-lib/include/
-          Copy-Item src/energy/*.ads release/ada-lib/include/
-          Copy-Item src/c_api/*.ads release/ada-lib/include/ -ErrorAction SilentlyContinue
+          Get-ChildItem -Path src/core -Filter *.ads | Copy-Item -Destination release/ada-lib/include/
+          Get-ChildItem -Path src/transport -Filter *.ads | Copy-Item -Destination release/ada-lib/include/
+          Get-ChildItem -Path src/energy -Filter *.ads | Copy-Item -Destination release/ada-lib/include/
+          Get-ChildItem -Path src/c_api -Filter *.ads -ErrorAction SilentlyContinue | Copy-Item -Destination release/ada-lib/include/
+          Write-Host "Ada include files:"
+          Get-ChildItem release/ada-lib/include/
           Compress-Archive -Path release/ada-lib/* -DestinationPath "adamodbus-$version-ada-windows-x64.zip"
 
       - name: Upload Windows artifacts
