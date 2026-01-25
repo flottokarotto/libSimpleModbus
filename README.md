@@ -29,6 +29,23 @@ Ada 2022 Modbus library for embedded and desktop systems.
 - **Ada/SPARK enthusiasts** looking for a modern, well-documented Modbus implementation
 - **C/C++ developers** who want a formally verified Modbus library without writing Ada code (via C API)
 
+## Project Status
+
+> **Note**: This library is functional but has limited real-world testing.
+
+| Component | Maturity | Notes |
+|-----------|----------|-------|
+| **Modbus TCP** | Well tested | Used with Kostal inverters, KSEM meters, go-e chargers |
+| **Protocol Core** | Well tested | 114 unit tests, SPARK proven, loopback verified |
+| **SunSpec** | Moderately tested | Tested with Kostal devices |
+| **Modbus RTU** | Limited testing | Unit tests pass, needs more hardware validation |
+| **Modbus ASCII** | Limited testing | Unit tests pass, not tested with real hardware |
+| **Embedded (ARM)** | Experimental | Compiles and runs in QEMU, not deployed on real hardware |
+| **Serial Transport** | Limited testing | Basic functionality verified on Windows |
+| **TLS Transport** | Experimental | Compiles, not tested with real Modbus/TCP Security devices |
+
+Contributions and real-world testing feedback are welcome!
+
 ## Supported Function Codes
 
 | Code | Function                     | Master | Slave |
