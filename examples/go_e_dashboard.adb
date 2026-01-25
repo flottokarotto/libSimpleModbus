@@ -235,10 +235,8 @@ procedure Go_E_Dashboard is
       Print (13, Left_Col, "L2:");
       Print (14, Left_Col, "L3:");
 
-      Print (10, Right_Col, "VOLTAGE", FG => Bright_Cyan, S => Bold);
-      Print (11, Right_Col, "L1:");
-      Print (12, Right_Col, "L2:");
-      Print (13, Right_Col, "L3:");
+      Print (10, Right_Col, "VOLTAGE (L-N)", FG => Bright_Cyan, S => Bold);
+      --  Labels printed with values in Display_Values to avoid overwrite
 
       Draw_HLine (15, 2, Width - 2);
 
@@ -335,7 +333,8 @@ procedure Go_E_Dashboard is
 
       Power_Watts : constant Float := Float (Power_Total) / 100.0;
       Power_kW    : constant Float := Power_Watts / 1000.0;
-      Max_Power   : constant Float := Float (Current_Amps) * 230.0 * 3.0 / 1000.0;
+      --  Max power based on cable rating (not current limit) for useful bar display
+      Max_Power   : constant Float := Float (Natural'Max (Cable_Amps, 16)) * 230.0 * 3.0 / 1000.0;
       Power_Pct   : Float := 0.0;
 
       Session_Wh : constant Float := Float (Energy_Session) * 10.0 / 3600.0;
@@ -361,24 +360,24 @@ procedure Go_E_Dashboard is
       Print (5, Right_Col + 14, Current_Amps'Image & " A  ",
              FG => Cyan, S => Bold);
 
-      --  Power
+      --  Power (values limited to not overwrite voltage column)
       Print (11, Left_Col + Val_Offset,
-             Fmt (Power_kW, 2) & " kW (" & Fmt (Power_Watts, 0) & " W)    ",
+             Fmt (Power_kW, 2) & " kW ",
              FG => Power_Color (Power_Watts), S => Bold);
       Print (12, Left_Col + Val_Offset,
-             Fmt (Float (Power_L1) * 100.0, 0) & " W    ",
+             Fmt (Float (Power_L1) * 100.0, 0) & " W ",
              FG => Power_Color (Float (Power_L1) * 100.0));
       Print (13, Left_Col + Val_Offset,
-             Fmt (Float (Power_L2) * 100.0, 0) & " W    ",
+             Fmt (Float (Power_L2) * 100.0, 0) & " W ",
              FG => Power_Color (Float (Power_L2) * 100.0));
       Print (14, Left_Col + Val_Offset,
-             Fmt (Float (Power_L3) * 100.0, 0) & " W    ",
+             Fmt (Float (Power_L3) * 100.0, 0) & " W ",
              FG => Power_Color (Float (Power_L3) * 100.0));
 
-      --  Voltage
-      Print (11, Right_Col + 4, Voltage_L1'Image & " V    ", FG => White);
-      Print (12, Right_Col + 4, Voltage_L2'Image & " V    ", FG => White);
-      Print (13, Right_Col + 4, Voltage_L3'Image & " V    ", FG => White);
+      --  Voltage (L-N) - direct from registers
+      Print (11, Right_Col, "L1:" & Voltage_L1'Image & " V  ", FG => White);
+      Print (12, Right_Col, "L2:" & Voltage_L2'Image & " V  ", FG => White);
+      Print (13, Right_Col, "L3:" & Voltage_L3'Image & " V  ", FG => White);
 
       --  Current
       Print (17, Left_Col + Val_Offset - 10,

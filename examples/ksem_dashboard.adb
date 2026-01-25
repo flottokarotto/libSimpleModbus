@@ -138,11 +138,11 @@ procedure KSEM_Dashboard is
       Print (8, Left_Col, "L2:");
       Print (9, Left_Col, "L3:");
 
-      Print (5, Right_Col, "VOLTAGE (L-N)", FG => Bright_Cyan, S => Bold);
-      Print (6, Right_Col, "Average:");
-      Print (7, Right_Col, "L1:");
-      Print (8, Right_Col, "L2:");
-      Print (9, Right_Col, "L3:");
+      Print (5, Right_Col, "VOLTAGE", FG => Bright_Cyan, S => Bold);
+      Print (6, Right_Col, "L-L Avg:");
+      Print (7, Right_Col, "L1-N:");
+      Print (8, Right_Col, "L2-N:");
+      Print (9, Right_Col, "L3-N:");
 
       Draw_HLine (10, 2, Width - 2);
 
@@ -210,12 +210,14 @@ procedure KSEM_Dashboard is
                 FG => Power_Color (-Data.Phase_C.Power_W));
       end if;
 
-      --  Voltage
-      Print (6, Right_Col + Val_Offset, Fmt (Data.Total_Voltage, 1) & " V    ", FG => White);
+      --  Voltage - show L-L average (~400V) and per-phase L-N (~230V)
       if Meter_Model >= 203 then
+         Print (6, Right_Col + Val_Offset, Fmt (Data.Total_Voltage_LL, 0) & " V    ", FG => White);
          Print (7, Right_Col + Val_Offset, Fmt (Data.Phase_A.Voltage_V, 1) & " V    ", FG => White);
          Print (8, Right_Col + Val_Offset, Fmt (Data.Phase_B.Voltage_V, 1) & " V    ", FG => White);
          Print (9, Right_Col + Val_Offset, Fmt (Data.Phase_C.Voltage_V, 1) & " V    ", FG => White);
+      else
+         Print (6, Right_Col + Val_Offset, Fmt (Data.Total_Voltage, 1) & " V    ", FG => White);
       end if;
 
       --  Current

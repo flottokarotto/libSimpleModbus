@@ -93,21 +93,22 @@ is
 
    --  Complete meter data
    type Meter_Data is record
-      Meter_Kind     : Meter_Type;
+      Meter_Kind      : Meter_Type;
       --  Totals
-      Total_Current  : Float;  --  A
-      Total_Voltage  : Float;  --  V (L-N avg)
-      Total_Power    : Float;  --  W (signed, negative = export)
-      Total_VA       : Float;  --  Apparent power
-      Total_VAR      : Float;  --  Reactive power
-      Total_PF       : Float;  --  Power factor
-      Frequency      : Float;  --  Hz
-      Total_Exp_Wh   : Float;  --  Total exported energy
-      Total_Imp_Wh   : Float;  --  Total imported energy
+      Total_Current   : Float;  --  A
+      Total_Voltage   : Float;  --  V (L-N avg)
+      Total_Voltage_LL : Float; --  V (L-L avg, ~400V in Europe)
+      Total_Power     : Float;  --  W (signed, negative = export)
+      Total_VA        : Float;  --  Apparent power
+      Total_VAR       : Float;  --  Reactive power
+      Total_PF        : Float;  --  Power factor
+      Frequency       : Float;  --  Hz
+      Total_Exp_Wh    : Float;  --  Total exported energy
+      Total_Imp_Wh    : Float;  --  Total imported energy
       --  Per-phase (valid for 3-phase models)
-      Phase_A        : Phase_Data;
-      Phase_B        : Phase_Data;
-      Phase_C        : Phase_Data;
+      Phase_A         : Phase_Data;
+      Phase_B         : Phase_Data;
+      Phase_C         : Phase_Data;
    end record;
 
    --  Scale factors extracted from meter registers

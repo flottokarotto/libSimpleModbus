@@ -64,9 +64,10 @@ is
       Data.Meter_Kind := Meter_Kind;
 
       --  Totals
-      Data.Total_Current := Scaled_Signed (Reg_A, SF.A_SF);
-      Data.Total_Voltage := Scaled (Reg_PhV, SF.V_SF);
-      Data.Total_Power   := Scaled_Signed (Reg_W, SF.W_SF);
+      Data.Total_Current    := Scaled_Signed (Reg_A, SF.A_SF);
+      Data.Total_Voltage    := Scaled (Reg_PhV, SF.V_SF);   --  L-N average
+      Data.Total_Voltage_LL := Scaled (Reg_PPV, SF.V_SF);   --  L-L average
+      Data.Total_Power      := Scaled_Signed (Reg_W, SF.W_SF);
       Data.Total_VA      := Scaled_Signed (Reg_VA, SF.VA_SF);
       Data.Total_VAR     := Scaled_Signed (Reg_VAR, SF.VAR_SF);
       Data.Total_PF      := Scaled_Signed (Reg_PF, SF.PF_SF);

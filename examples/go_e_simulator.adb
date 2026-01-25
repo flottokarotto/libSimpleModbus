@@ -185,10 +185,12 @@ procedure Go_E_Simulator is
       Power_L3 := Unsigned_32 (Voltage_L3 * Current_L3 / 1000);
 
       --  Total power (x0.01W)
+      --  Current is in deciamps (0.1A), so V*I gives 0.1W units
+      --  Multiply by 10 to convert to 0.01W units
       Power_Total := Unsigned_32 (
-        Voltage_L1 * Current_L1 +
-        Voltage_L2 * Current_L2 +
-        Voltage_L3 * Current_L3);
+        (Voltage_L1 * Current_L1 +
+         Voltage_L2 * Current_L2 +
+         Voltage_L3 * Current_L3) * 10);
 
       --  Update Input Registers
       --  Car State (30101 = index 0)
