@@ -84,27 +84,44 @@ jobs:
       - name: Select ARM toolchain
         run: alr toolchain --select gnat_arm_elf^15 gprbuild
 
-      - name: Build embedded examples
+      - name: Build library (release)
         run: |
-          cd examples/embedded/cortex_m4_lwip && alr build
-          cd ../stm32_rtu && alr build
-          alr exec -- gprbuild -P stm32_rtu.gpr -XMAIN=slave
-          alr exec -- gprbuild -P stm32_rtu.gpr -XMAIN=master
+          # Build library for ARM Cortex-M4 (ZFP runtime, no OS dependencies)
+          gprbuild -P adamodbus.gpr -XADAMODBUS_BUILD_MODE=release \
+            --target=arm-eabi --RTS=light-cortex-m4 \
+            -XGPR_TOOL=gprbuild -j0
 
       - name: Create ARM package
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          mkdir -p release/arm
-          cp examples/embedded/cortex_m4_lwip/bin/*.elf release/arm/ || true
-          cp examples/embedded/stm32_rtu/bin/*.elf release/arm/ || true
-          cd release/arm && zip -r "../../adamodbus-$VERSION-arm-cortexm4.zip" *.elf
+
+          # Ada library
+          mkdir -p release/arm-ada/lib release/arm-ada/include
+          cp lib/libadamodbus.a release/arm-ada/lib/
+          cp lib/*.ali release/arm-ada/lib/
+          cp src/core/*.ads release/arm-ada/include/
+          cp src/transport/*.ads release/arm-ada/include/
+          cp src/energy/*.ads release/arm-ada/include/
+          cp src/c_api/*.ads release/arm-ada/include/ 2>/dev/null || true
+
+          # C API
+          mkdir -p release/arm-c/lib release/arm-c/include
+          cp lib/libadamodbus.a release/arm-c/lib/
+          cp src/c_api/*.h release/arm-c/include/
+
+          echo "ARM Ada library contents:"
+          ls -la release/arm-ada/lib/
+          ls -la release/arm-ada/include/
+
+          cd release/arm-ada && zip -r "../../adamodbus-$VERSION-arm-cortexm4-ada.zip" lib include
+          cd ../arm-c && zip -r "../../adamodbus-$VERSION-arm-cortexm4-c.zip" lib include
 
       - name: Upload ARM artifacts
         uses: actions/upload-artifact@v4
         with:
           name: arm-packages
-          path: "*.zip"
+          path: "adamodbus-*-arm-*.zip"
 
   create-release:
     needs: [build-windows, build-arm]
