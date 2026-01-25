@@ -1,6 +1,6 @@
 name = "adamodbus"
 description = "SPARK-verified Ada 2022 Modbus library with SunSpec support and C API"
-version = "1.1.1"
+version = "1.0.0"
 licenses = "MIT"
 authors = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]
 maintainers = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]

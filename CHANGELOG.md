@@ -5,44 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.1] - 2026-01-25
-
-### Added
-
-- **Release automation**: GitHub Actions workflow for automated binary releases
-- **Release script**: `tools/create_release.sh` for local release builds
-- **Project status**: README section with maturity levels per component
-
-### Changed
-
-- **Documentation**: Added transparency about testing status (TCP well tested, RTU limited, embedded experimental)
-
-## [1.1.0] - 2026-01-25
-
-### Added
-
-- **go-e Charger support**: New `Ada_Modbus.Energy.Go_E` package for go-e wallbox
-- **go-e Dashboard**: Terminal-based live dashboard (`go_e_dashboard`)
-- **go-e Simulator**: Modbus TCP simulator for testing without hardware
-- **SunSpec Meter**: L-L voltage field (`Total_Voltage_LL`)
-- **Integration tests**: Python-based Modbus simulator tests
-- **C example**: `modbus_client.c` with comprehensive documentation
-
-### Changed
-
-- **KSEM Dashboard**: Shows L-L average voltage (~400V) from SunSpec register
-- **Power bar**: Uses cable rating as maximum instead of current limit
-- **CI**: Cached apt packages (lcov, qemu) for faster builds
-- **Protocol types**: Replaced preconditions with custom subtypes (`PDU_Data_Length`, `ADU_Data_Length`)
-
-### Fixed
-
-- **go-e Simulator**: Power total calculation (was 10× too low)
-- **go-e Dashboard**: Voltage labels layout overlap
-- **KSEM Dashboard**: Average voltage calculation (was showing ~330V instead of ~230V)
-- **SPARK proofs**: Overflow issues in Go_E package with `Unsigned_32` types
-
-## [1.0.0] - 2026-01-24
+## [1.0.0] - 2026-01-25
 
 ### Added
 
@@ -51,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Master (Client) with synchronous and asynchronous APIs
 - Slave (Server) with callback-based request handling
 - All standard function codes (FC 01-06, 07, 08, 15, 16, 17, 22, 23)
-- 100% SPARK-verified protocol core (1045 checks proven)
+- 100% SPARK-verified protocol core
 
 #### Transport Backends
 - TCP socket transport (Windows/Linux)
@@ -69,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Models 201-204: Meters (1P/SP/3P Wye/Delta)
   - Models 701/704: DER AC/Control
   - Model 802: Battery (extended)
+- **go-e Charger**: `Ada_Modbus.Energy.Go_E` package for go-e wallbox
 - SG-Ready heat pump control
 - §14a EnWG grid power limitation
 
@@ -84,15 +48,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Async master demo
 - Kostal inverter reader + dashboard
 - KSEM energy meter reader + dashboard
+- go-e charger dashboard + simulator
 - C language examples
 - Embedded examples (Cortex-M4 with LwIP, STM32 RTU)
 
 #### Build & Test
 - Alire package manager support
 - GitHub Actions CI (build, test, SPARK, embedded)
+- Automated release workflow with binary artifacts
 - 114 unit tests with AUnit
+- Integration tests with Python Modbus simulator
 - Code coverage with Codecov
-- SunSpec register offset validation
 
 ### Technical Details
 
@@ -102,6 +68,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 32-bit word order support (ABCD, CDAB, BADC, DCBA)
 - Signed scale factor support for SunSpec
 
-[1.1.1]: https://github.com/flottokarotto/AdaModbus/releases/tag/v1.1.1
-[1.1.0]: https://github.com/flottokarotto/AdaModbus/releases/tag/v1.1.0
 [1.0.0]: https://github.com/flottokarotto/AdaModbus/releases/tag/v1.0.0

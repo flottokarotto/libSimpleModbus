@@ -9,7 +9,7 @@
 project Adamodbus_Embedded is
 
    for Library_Name use "adamodbus";
-   for Library_Version use "1.1.1";
+   for Library_Version use "1.0.0";
 
    --  Core sources only (no OS-dependent transports)
    for Source_Dirs use ("src/core", "src/energy");
