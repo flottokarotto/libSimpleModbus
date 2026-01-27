@@ -64,6 +64,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.info
+          slug: flottokarotto/AdaModbus
           fail_ci_if_error: false
 
       - name: Validate SunSpec offsets
