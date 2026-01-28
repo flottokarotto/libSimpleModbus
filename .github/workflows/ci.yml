@@ -288,9 +288,11 @@ jobs:
           chmod +x examples/embedded/stm32_rtu/run_ci_test.sh
           examples/embedded/stm32_rtu/run_ci_test.sh
 
-      # TLS example: compile only (verifies Ada code compiles for ARM)
-      # Full mbedTLS build requires cross-compiled mbedTLS library
-      - name: Build TLS example (compile only)
+      # TLS example with stubs for QEMU testing
+      - name: Build and test TLS example in QEMU
         run: |
           cd examples/embedded/cortex_m4_tls
-          alr exec -- gprbuild -c -P cortex_m4_tls.gpr -XMBEDTLS_MODE=stub
+          alr exec -- gprbuild -P cortex_m4_tls.gpr -XMBEDTLS_MODE=test
+          timeout 10 qemu-system-arm -M lm3s6965evb -nographic -semihosting \
+            -kernel bin/main_tls_client.elf 2>&1 | tee qemu_output.txt || true
+          grep -q "TLS Test PASSED" qemu_output.txt
