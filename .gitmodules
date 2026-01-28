@@ -1,3 +1,6 @@
 [submodule "examples/embedded/cortex_m4_lwip/lwip"]
 	path = examples/embedded/cortex_m4_lwip/lwip
 	url = https://github.com/lwip-tcpip/lwip.git
+[submodule "examples/embedded/cortex_m4_tls/mbedtls"]
+	path = examples/embedded/cortex_m4_tls/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git

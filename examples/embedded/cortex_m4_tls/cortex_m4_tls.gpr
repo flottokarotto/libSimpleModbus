@@ -1,6 +1,7 @@
 --  Embedded TLS Example - GPR Project for Cortex-M + mbedTLS
 --
 --  Build:
+--    cd examples/embedded/cortex_m4_tls
 --    alr build
 --
 --  Run in QEMU:
@@ -9,37 +10,44 @@
 --
 --  Requirements:
 --    - GNAT ARM ELF cross-compiler (alr toolchain --select gnat_arm_elf)
---    - mbedTLS library compiled for ARM
---
---  NOTE: Target is lm3s6965evb for QEMU CI testing.
---  QEMU's lm3s6965evb has full ARM semihosting support.
+--    - mbedTLS submodule (git submodule update --init)
 
 project Cortex_M4_TLS is
 
-   type Target_Type is ("lm3s6965evb", "stm32f4");
-   Target : Target_Type := external ("TARGET", "lm3s6965evb");
+   type Build_Mode is ("stub", "full");
+   Mode : Build_Mode := external ("MBEDTLS_MODE", "stub");
 
-   for Source_Dirs use
-     ("src",
-      "../../../src/core",
-      "../../../src/transport",
-      "../../../tls_mbed/src",
-      "../../../tls_mbed/src/bindings");
+   --  Core source directories (always included)
+   Core_Src := ("src",
+                "../../../src/core",
+                "../../../tls_mbed/src",
+                "../../../tls_mbed/src/bindings");
 
-   for Main use ("main_tls_client.adb");
+   --  mbedTLS sources (only for full mode)
+   MbedTLS_Src := ("mbedtls/library",
+                   "mbedtls/include",
+                   "mbedtls_port");
 
-   for Object_Dir use "obj/" & Target;
+   case Mode is
+      when "stub" =>
+         --  Stub mode: Only build Ada code, no actual mbedTLS
+         for Source_Dirs use Core_Src;
+         for Main use ("main_tls_client.adb");
+         for Languages use ("Ada");
+         for Excluded_Source_Files use ();
+
+      when "full" =>
+         --  Full mode: Build with mbedTLS sources
+         for Source_Dirs use Core_Src & MbedTLS_Src;
+         for Main use ("main_tls_client.adb");
+         for Languages use ("Ada", "C");
+   end case;
+
+   for Object_Dir use "obj";
    for Exec_Dir use "bin";
 
    for Target use "arm-eabi";
-   for Languages use ("Ada");
-
-   case Target is
-      when "lm3s6965evb" =>
-         for Runtime ("Ada") use "light-lm3s";
-      when "stm32f4" =>
-         for Runtime ("Ada") use "light-stm32f4";
-   end case;
+   for Runtime ("Ada") use "light-lm3s";
 
    package Compiler is
       Ada_Switches :=
@@ -51,19 +59,23 @@ project Cortex_M4_TLS is
          "-ffunction-sections",
          "-fdata-sections");
 
+      C_Switches :=
+        ("-g", "-O2", "-Wall",
+         "-ffunction-sections", "-fdata-sections",
+         "-mcpu=cortex-m3", "-mthumb",
+         "-DMBEDTLS_CONFIG_FILE=\"mbedtls_config.h\"",
+         "-I" & Project'Project_Dir & "/mbedtls/include",
+         "-I" & Project'Project_Dir & "/mbedtls_port");
+
       for Default_Switches ("Ada") use Ada_Switches;
+      for Default_Switches ("C") use C_Switches;
    end Compiler;
 
    package Linker is
-      --  Link against mbedTLS libraries
-      --  Note: Paths need to be adjusted for actual mbedTLS installation
       for Default_Switches ("Ada") use
         ("-Wl,--gc-sections",
          "-Wl,--print-memory-usage",
-         "-Wl,--defsym=__stack_size=16384",  --  16KB stack (TLS needs more)
-         "-lmbedtls",
-         "-lmbedx509",
-         "-lmbedcrypto");
+         "-Wl,--defsym=__stack_size=16384");  --  16KB stack for TLS
    end Linker;
 
    package Builder is
