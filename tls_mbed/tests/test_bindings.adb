@@ -5,16 +5,16 @@
 --  Run on desktop with libmbedtls-dev installed.
 
 with Ada.Text_IO; use Ada.Text_IO;
+with Interfaces.C; use Interfaces.C;
 with MbedTLS;
-with MbedTLS.SSL;
 with MbedTLS.Entropy;
 with MbedTLS.CTR_DRBG;
-with MbedTLS.X509;
-with MbedTLS.PK;
 with System;
 
 procedure Test_Bindings is
    use MbedTLS;
+
+   OK : constant Error_Code := MbedTLS.Success;
 
    Entropy_Ctx : MbedTLS.Entropy.Entropy_Context;
    DRBG_Ctx    : MbedTLS.CTR_DRBG.CTR_DRBG_Context;
@@ -41,7 +41,7 @@ begin
       Entropy_Ctx'Address,
       System.Null_Address, 0);
 
-   if Ret = Success then
+   if Ret = OK then
       Put_Line ("OK");
    else
       Put_Line ("FAILED (code:" & Error_Code'Image (Ret) & ")");
@@ -54,7 +54,7 @@ begin
    Put_Line ("OK");
 
    Put_Line ("");
-   if Ret = Success then
+   if Ret = OK then
       Put_Line ("All tests PASSED");
    else
       Put_Line ("Some tests FAILED");

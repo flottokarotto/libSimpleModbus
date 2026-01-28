@@ -3,6 +3,7 @@
 --  SPDX-License-Identifier: MIT
 
 with Interfaces.C; use Interfaces.C;
+with System; use System;
 with System.Address_To_Access_Conversions;
 with MbedTLS.SSL;
 with MbedTLS.Entropy;
@@ -14,6 +15,9 @@ with MbedTLS.Net;
 package body Ada_Modbus.Transport.TLS_Mbed is
 
    use MbedTLS;
+
+   --  Alias for mbedTLS success to avoid confusion with Ada_Modbus.Status
+   OK : constant Error_Code := MbedTLS.Success;
 
    --  Address conversions for passing context addresses to C
    package SSL_Addr is new System.Address_To_Access_Conversions
@@ -112,7 +116,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
          Get_Entropy (Connection).all'Address,
          System.Null_Address, 0);
 
-      if Ret /= Success then
+      if Ret /= OK then
          Connection.Current_State := Error;
          Result := Frame_Error;
          return;
@@ -125,7 +129,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
             Config.CA_Certificate,
             size_t (Config.CA_Cert_Len));
 
-         if Ret /= Success then
+         if Ret /= OK then
             Connection.Current_State := Error;
             Result := Frame_Error;
             return;
@@ -139,7 +143,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
             Config.Certificate,
             size_t (Config.Certificate_Len));
 
-         if Ret /= Success then
+         if Ret /= OK then
             Connection.Current_State := Error;
             Result := Frame_Error;
             return;
@@ -155,7 +159,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
                MbedTLS.CTR_DRBG.Random'Address,
                Get_DRBG (Connection).all'Address);
 
-            if Ret /= Success then
+            if Ret /= OK then
                Connection.Current_State := Error;
                Result := Frame_Error;
                return;
@@ -170,7 +174,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
          SSL_TRANSPORT_STREAM,
          SSL_PRESET_DEFAULT);
 
-      if Ret /= Success then
+      if Ret /= OK then
          Connection.Current_State := Error;
          Result := Frame_Error;
          return;
@@ -198,7 +202,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
             Get_Own_Cert (Connection).all,
             Get_PK (Connection).all);
 
-         if Ret /= Success then
+         if Ret /= OK then
             Connection.Current_State := Error;
             Result := Frame_Error;
             return;
@@ -218,7 +222,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
       --  Setup SSL context with configuration
       Ret := MbedTLS.SSL.Setup (Get_SSL (Connection).all, Get_Conf (Connection).all);
 
-      if Ret /= Success then
+      if Ret /= OK then
          Connection.Current_State := Error;
          Result := Frame_Error;
          return;
@@ -227,7 +231,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
       --  Set hostname for SNI
       Ret := MbedTLS.SSL.Set_Hostname (Get_SSL (Connection).all, Host_C);
 
-      if Ret /= Success then
+      if Ret /= OK then
          Connection.Current_State := Error;
          Result := Frame_Error;
          return;
@@ -237,7 +241,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
       Ret := MbedTLS.Net.Connect
         (Get_Net (Connection).all, Host_C, Port_C, MbedTLS.Net.PROTO_TCP);
 
-      if Ret /= Success then
+      if Ret /= OK then
          Connection.Current_State := Error;
          Result := Timeout;  --  Connection failed
          return;
@@ -254,7 +258,7 @@ package body Ada_Modbus.Transport.TLS_Mbed is
       --  Perform TLS handshake
       loop
          Ret := MbedTLS.SSL.Handshake (Get_SSL (Connection).all);
-         exit when Ret = Success;
+         exit when Ret = OK;
 
          if not Is_Retriable (Ret) then
             Connection.Current_State := Handshake_Failed;

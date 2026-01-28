@@ -21,3 +21,6 @@ adamodbus = "^1.0.0"
 
 # Note: mbedTLS is expected to be provided by the target BSP or linked externally
 # No Alire crate dependency - uses C bindings directly
+
+[[pins]]
+adamodbus = { path='..' }
