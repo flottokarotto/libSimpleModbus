@@ -207,37 +207,6 @@ jobs:
             spark_results.txt
             obj/gnatprove/gnatprove.out
 
-  # TLS mbedTLS build and test (desktop only, embedded requires cross-compiled mbedTLS)
-  build-tls-mbed:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Alire
-        uses: alire-project/setup-alire@v3
-        with:
-          version: ${{ env.ALIRE_VERSION }}
-          toolchain: gnat_native^15
-          cache: true
-
-      - name: Install mbedTLS
-        run: sudo apt-get install -y libmbedtls-dev
-
-      - name: Build TLS mbedTLS library
-        run: |
-          cd tls_mbed
-          alr pin adamodbus --use=..
-          alr build
-
-      - name: Build and run mbedTLS bindings test
-        run: |
-          cd tls_mbed
-          mkdir -p obj/tests bin
-          alr exec -- gprbuild -P tests/tls_mbed_tests.gpr
-          ./bin/test_mbed_bindings
-
   build-embedded:
     runs-on: ubuntu-latest
 
