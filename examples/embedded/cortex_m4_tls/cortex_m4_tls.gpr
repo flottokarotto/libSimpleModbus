@@ -14,7 +14,7 @@
 
 project Cortex_M4_TLS is
 
-   type Build_Mode is ("stub", "full");
+   type Build_Mode is ("stub", "test", "full");
    Mode : Build_Mode := external ("MBEDTLS_MODE", "stub");
 
    --  Core source directories (always included)
@@ -29,16 +29,24 @@ project Cortex_M4_TLS is
                    "mbedtls/include",
                    "mbedtls_port");
 
+   --  Stub implementations for QEMU testing
+   Stub_Src := ("mbedtls_stubs");
+
    case Mode is
       when "stub" =>
-         --  Stub mode: Only build Ada code, no actual mbedTLS
+         --  Stub mode: Only build Ada code, no linking
          for Source_Dirs use Core_Src;
          for Main use ("main_tls_client.adb");
          for Languages use ("Ada");
-         for Excluded_Source_Files use ();
+
+      when "test" =>
+         --  Test mode: Build with C stubs for QEMU testing
+         for Source_Dirs use Core_Src & Stub_Src;
+         for Main use ("main_tls_client.adb");
+         for Languages use ("Ada", "C");
 
       when "full" =>
-         --  Full mode: Build with mbedTLS sources
+         --  Full mode: Build with real mbedTLS sources
          for Source_Dirs use Core_Src & MbedTLS_Src;
          for Main use ("main_tls_client.adb");
          for Languages use ("Ada", "C");
@@ -60,16 +68,22 @@ project Cortex_M4_TLS is
          "-ffunction-sections",
          "-fdata-sections");
 
-      C_Switches :=
+      C_Switches_Base :=
         ("-g", "-O2", "-Wall",
          "-ffunction-sections", "-fdata-sections",
-         "-mcpu=cortex-m3", "-mthumb",
-         "-DMBEDTLS_CONFIG_FILE=""mbedtls_config.h""",
-         "-I" & Project'Project_Dir & "/mbedtls/include",
-         "-I" & Project'Project_Dir & "/mbedtls_port");
+         "-mcpu=cortex-m3", "-mthumb");
 
       for Default_Switches ("Ada") use Ada_Switches;
-      for Default_Switches ("C") use C_Switches;
+
+      case Mode is
+         when "stub" | "test" =>
+            for Default_Switches ("C") use C_Switches_Base;
+         when "full" =>
+            for Default_Switches ("C") use C_Switches_Base &
+              ("-DMBEDTLS_CONFIG_FILE=""mbedtls_config.h""",
+               "-I" & Project'Project_Dir & "/mbedtls/include",
+               "-I" & Project'Project_Dir & "/mbedtls_port");
+      end case;
    end Compiler;
 
    package Linker is

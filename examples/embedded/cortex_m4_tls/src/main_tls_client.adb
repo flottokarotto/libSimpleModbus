@@ -146,4 +146,9 @@ begin
    Disconnect (Connection);
    Put_Line ("Disconnected");
 
+   --  Halt (light runtime has no exit)
+   loop
+      null;
+   end loop;
+
 end Main_TLS_Client;
