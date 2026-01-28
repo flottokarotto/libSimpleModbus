@@ -125,7 +125,7 @@ begin
       declare
          FC : constant Byte := Response_Buffer (7);  --  Function code after MBAP
       begin
-         if FC = FC_Read_Holding_Registers then
+         if FC = Byte (FC_Read_Holding_Registers) then
             Put_Line ("Response OK: FC 03");
             Put_Line ("");
             Put_Line ("TLS Test PASSED");

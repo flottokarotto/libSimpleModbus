@@ -288,10 +288,9 @@ jobs:
           chmod +x examples/embedded/stm32_rtu/run_ci_test.sh
           examples/embedded/stm32_rtu/run_ci_test.sh
 
-      # TLS example: stub mode only (verifies Ada code compiles for ARM)
-      # Full mbedTLS build requires manual setup due to size constraints
-      - name: Build TLS example (stub mode)
+      # TLS example: compile only (verifies Ada code compiles for ARM)
+      # Full mbedTLS build requires cross-compiled mbedTLS library
+      - name: Build TLS example (compile only)
         run: |
           cd examples/embedded/cortex_m4_tls
-          git submodule update --init mbedtls || true
-          alr build -- -XMBEDTLS_MODE=stub || echo "Stub build check (linking skipped)"
+          alr exec -- gprbuild -c -P cortex_m4_tls.gpr -XMBEDTLS_MODE=stub

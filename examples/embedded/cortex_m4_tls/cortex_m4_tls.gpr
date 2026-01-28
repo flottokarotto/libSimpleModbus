@@ -20,6 +20,7 @@ project Cortex_M4_TLS is
    --  Core source directories (always included)
    Core_Src := ("src",
                 "../../../src/core",
+                "../../../src/transport",
                 "../../../tls_mbed/src",
                 "../../../tls_mbed/src/bindings");
 
@@ -63,7 +64,7 @@ project Cortex_M4_TLS is
         ("-g", "-O2", "-Wall",
          "-ffunction-sections", "-fdata-sections",
          "-mcpu=cortex-m3", "-mthumb",
-         "-DMBEDTLS_CONFIG_FILE=\"mbedtls_config.h\"",
+         "-DMBEDTLS_CONFIG_FILE=""mbedtls_config.h""",
          "-I" & Project'Project_Dir & "/mbedtls/include",
          "-I" & Project'Project_Dir & "/mbedtls_port");
 
