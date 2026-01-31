@@ -14,7 +14,7 @@ project-files = ["adamodbus_tls.gpr"]
 ADAMODBUS_BUILD_MODE = ["debug", "release"]
 
 [gpr-set-externals]
-ADAMODBUS_BUILD_MODE = "debug"
+SOCKET = "openssl"
 
 [[depends-on]]
 adamodbus = "^1.0.0"

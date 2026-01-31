@@ -475,8 +475,8 @@ package body Test_Async is
       Assert (Mock_Async.Pending_Count (Async_Ctx) = 1, "Should have 1 pending request");
    end Test_Read_Input_Registers_Async;
 
-   --  Callback tracking for coils
-   Coils_Callback_Called : Boolean := False;
+   --  Callback tracking for coils (set by callback, could be used for response testing)
+   Coils_Callback_Called : Boolean := False with Unreferenced;
 
    procedure Test_Coils_Callback
      (Handle         : Mock_Async.Request_Handle;

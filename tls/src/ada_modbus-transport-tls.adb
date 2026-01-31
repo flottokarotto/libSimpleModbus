@@ -2,6 +2,7 @@
 --  Copyright (c) 2026 Florian Fischer
 --  SPDX-License-Identifier: MIT
 
+with Ada.Exceptions;
 with Ada.Streams;
 with AWS.Net;
 with AWS.Net.Std;
@@ -86,11 +87,11 @@ package body Ada_Modbus.Transport.TLS is
       Result := Success;
 
    exception
-      when AWS.Net.Socket_Error =>
-         Set_Error (Connection, "TLS connect failed");
+      when E : AWS.Net.Socket_Error =>
+         Set_Error (Connection, "TLS connect: " & Ada.Exceptions.Exception_Message (E));
          Result := Frame_Error;
-      when others =>
-         Set_Error (Connection, "TLS connect failed (unknown error)");
+      when E : others =>
+         Set_Error (Connection, "TLS connect: " & Ada.Exceptions.Exception_Message (E));
          Result := Frame_Error;
    end Connect;
 

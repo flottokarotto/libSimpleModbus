@@ -155,7 +155,7 @@ package body Test_TCP is
    procedure Test_Frame_Too_Short (T : in Out Test_Case'Class);
    procedure Test_Frame_Too_Short (T : in Out Test_Case'Class) is
       pragma Unreferenced (T);
-      ADU         : ADU_Buffer := [others => 0];
+      ADU         : constant ADU_Buffer := [others => 0];
       PDU         : PDU_Buffer;
       Transaction : Transaction_Id;
       Unit        : Unit_Id;

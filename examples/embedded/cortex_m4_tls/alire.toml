@@ -1,0 +1,14 @@
+name = "embedded_tls_example"
+description = "Embedded Modbus TLS example for Cortex-M with mbedTLS"
+version = "1.0.0"
+
+authors = ["Florian Fischer"]
+licenses = "MIT"
+
+project-files = ["cortex_m4_tls.gpr"]
+
+[build-switches]
+"*".style_checks = "No"
+
+[[depends-on]]
+gnat_arm_elf = ">=14"

@@ -1,0 +1,23 @@
+name = "adamodbus_tls_mbed"
+description = "TLS transport for AdaModbus using mbedTLS (embedded/MCU)"
+version = "1.0.0"
+licenses = "MIT"
+authors = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]
+maintainers = ["Florian Fischer <florian.j.a.fischer@icloud.com>"]
+maintainers-logins = ["flottflo"]
+
+tags = ["modbus", "tls", "mbedtls", "embedded", "mcu", "security"]
+
+project-files = ["adamodbus_tls_mbed.gpr"]
+
+[gpr-externals]
+ADAMODBUS_BUILD_MODE = ["debug", "release"]
+
+[[depends-on]]
+adamodbus = "^1.0.0"
+
+# Note: mbedTLS is expected to be provided by the target BSP or linked externally
+# No Alire crate dependency - uses C bindings directly
+
+[[pins]]
+adamodbus = { path='..' }

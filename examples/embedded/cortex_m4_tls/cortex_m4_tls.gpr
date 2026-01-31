@@ -1,0 +1,165 @@
+--  Embedded TLS Example - GPR Project for Cortex-M + mbedTLS
+--
+--  Build modes:
+--    stub  - Ada only, no linking (compile check)
+--    test  - With C stubs for quick QEMU testing
+--    full  - Real mbedTLS for integration testing
+--
+--  Build:
+--    alr build -- -XMBEDTLS_MODE=full
+--
+--  Run in QEMU:
+--    qemu-system-arm -M lm3s6965evb -nographic -semihosting \
+--      -kernel bin/main_tls_client.elf
+
+project Cortex_M4_TLS is
+
+   type Build_Mode is ("stub", "test", "loopback", "full");
+   Mode : Build_Mode := external ("MBEDTLS_MODE", "stub");
+
+   --  Core source directories
+   Core_Src := ("src",
+                "../../../src/core",
+                "../../../src/transport",
+                "../../../tls_mbed/src",
+                "../../../tls_mbed/src/bindings");
+
+   --  mbedTLS sources
+   MbedTLS_Src := ("mbedtls/library",
+                   "mbedtls/include",
+                   "mbedtls_port");
+
+   --  Stub implementations
+   Stub_Src := ("mbedtls_stubs");
+
+   --  Loopback stubs (bidirectional communication)
+   Loopback_Src := ("mbedtls_stubs");  --  Uses loopback_stubs.c
+
+   case Mode is
+      when "stub" =>
+         for Source_Dirs use Core_Src;
+         for Main use ("main_tls_client.adb", "main_tls_server.adb");
+         for Languages use ("Ada");
+
+      when "test" =>
+         for Source_Dirs use Core_Src & Stub_Src;
+         for Main use ("main_tls_client.adb", "main_tls_server.adb");
+         for Languages use ("Ada", "C");
+
+      when "loopback" =>
+         for Source_Dirs use Core_Src & Loopback_Src;
+         for Main use ("main_loopback_tls.adb");
+         for Languages use ("Ada", "C");
+         --  Exclude standard stubs, use loopback_stubs.c
+         for Excluded_Source_Files use ("mbedtls_stubs.c");
+
+      when "full" =>
+         for Source_Dirs use Core_Src & MbedTLS_Src;
+         for Main use ("main_tls_client.adb", "main_tls_server.adb");
+         for Languages use ("Ada", "C");
+
+         --  Exclude unused mbedTLS files to reduce size
+         for Excluded_Source_Files use (
+            --  Hardware-specific AES
+            "aesce.c", "aesni.c", "padlock.c",
+            --  Unused ciphers
+            "aria.c", "camellia.c", "chacha20.c", "chachapoly.c", "des.c",
+            "ccm.c", "cmac.c", "nist_kw.c", "poly1305.c",
+            --  PEM/Base64 (we use DER)
+            "base64.c", "pem.c",
+            --  Debug
+            "debug.c",
+            --  ECC (we use RSA only)
+            "dhm.c", "ecdh.c", "ecdsa.c", "ecjpake.c",
+            "ecp.c", "ecp_curves.c", "ecp_curves_new.c",
+            "pk_ecc.c",
+            --  Error strings
+            "error.c",
+            --  Other RNG
+            "hkdf.c", "hmac_drbg.c",
+            --  Post-quantum
+            "lmots.c", "lms.c",
+            --  Unused hashes
+            "md5.c", "ripemd160.c", "sha1.c", "sha3.c", "sha512.c",
+            --  TLS 1.3 / MPS
+            "mps_reader.c", "mps_trace.c",
+            "ssl_tls13_client.c", "ssl_tls13_generic.c",
+            "ssl_tls13_keys.c", "ssl_tls13_server.c",
+            --  Network (we provide our own)
+            "net_sockets.c",
+            --  PKCS extras
+            "pkcs12.c", "pkcs5.c", "pkcs7.c", "pkwrite.c",
+            --  PSA Crypto API (not needed)
+            "psa_crypto.c", "psa_crypto_aead.c", "psa_crypto_cipher.c",
+            "psa_crypto_client.c", "psa_crypto_driver_wrappers_no_static.c",
+            "psa_crypto_ecp.c", "psa_crypto_ffdh.c", "psa_crypto_hash.c",
+            "psa_crypto_mac.c", "psa_crypto_pake.c", "psa_crypto_rsa.c",
+            "psa_crypto_se.c", "psa_crypto_slot_management.c",
+            "psa_crypto_storage.c", "psa_its_file.c", "psa_util.c",
+            --  Server features (ticket/cookie for session resumption)
+            "ssl_cache.c", "ssl_cookie.c", "ssl_ticket.c",
+            --  Threading/timing
+            "threading.c", "timing.c",
+            --  X.509 creation (we only parse)
+            "x509_create.c", "x509_crl.c", "x509_csr.c",
+            "x509write.c", "x509write_crt.c", "x509write_csr.c",
+            --  ASN1 write (we only parse)
+            "asn1write.c",
+            --  Version features
+            "version_features.c",
+            --  Block cipher wrapper (using direct AES)
+            "block_cipher.c",
+            --  Debug helpers
+            "ssl_debug_helpers_generated.c"
+         );
+   end case;
+
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+
+   for Target use "arm-eabi";
+   for Runtime ("Ada") use "light-lm3s";
+
+   package Compiler is
+      Ada_Switches :=
+        ("-gnat2022",
+         "-gnatwa",
+         "-gnatw.X",
+         "-g",
+         "-Os",
+         "-ffunction-sections",
+         "-fdata-sections");
+
+      C_Switches_Base :=
+        ("-Os", "-Wall", "-Wno-unused-function",
+         "-ffunction-sections", "-fdata-sections",
+         "-mcpu=cortex-m3", "-mthumb");
+
+      for Default_Switches ("Ada") use Ada_Switches;
+
+      case Mode is
+         when "stub" | "test" | "loopback" =>
+            for Default_Switches ("C") use C_Switches_Base;
+         when "full" =>
+            --  Note: We include platform_alt.h FIRST which disables time,
+            --  then the standard mbedTLS config loads, then our overrides
+            --  in mbedtls_config.h (via MBEDTLS_USER_CONFIG_FILE) take effect.
+            for Default_Switches ("C") use C_Switches_Base &
+              ("-include", "platform_alt.h",
+               "-I" & Project'Project_Dir & "/mbedtls_port",
+               "-I" & Project'Project_Dir & "/mbedtls/include");
+      end case;
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("Ada") use
+        ("-Wl,--gc-sections",
+         "-Wl,--print-memory-usage",
+         "-Wl,--defsym=__stack_size=24576");  --  24KB stack for TLS
+   end Linker;
+
+   package Builder is
+      for Executable_Suffix use ".elf";
+   end Builder;
+
+end Cortex_M4_TLS;

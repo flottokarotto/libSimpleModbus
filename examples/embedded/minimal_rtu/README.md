@@ -1,39 +1,42 @@
-# Minimal RTU Embedded Example
+# Minimal RTU Example
 
-This is a minimal Modbus RTU slave example for embedded systems.
+A minimal Modbus RTU slave example for embedded systems. This is the simplest possible implementation for resource-constrained microcontrollers.
 
 ## Features
 
-- No TCP/IP stack required (RTU over UART only)
-- ZFP/Light runtime compatible
-- Minimal RAM footprint (~2KB)
-- Simple callback-based design
-
-## Hardware Requirements
-
-- Any ARM Cortex-M microcontroller
-- UART peripheral for RS-485/RS-232
+- No TCP/IP stack required - just UART
+- Compatible with ZFP and Light runtimes
+- Minimal RAM footprint (~2 KB)
+- Simple callback-based register handling
 
 ## Building
 
 ```bash
-# With Alire (using arm-eabi toolchain)
 alr toolchain --select gnat_arm_elf
 alr exec -- gprbuild -P minimal_rtu.gpr --target=arm-eabi --RTS=light-cortex-m4f
 ```
 
-## Integration
+## Integration Steps
 
-1. Implement `UART_Send` and `UART_Receive` for your hardware
-2. Call `Modbus_Poll` from your main loop
-3. Implement callbacks for your register map
+1. **Implement UART functions** for your hardware:
+   ```ada
+   function UART_Send (Data : Byte_Array) return Natural;
+   function UART_Receive (Buffer : out Byte_Array; Timeout_Ms : Natural) return Natural;
+   ```
+
+2. **Implement register callbacks**:
+   ```ada
+   function Read_Holding_Registers
+     (Start : Register_Address; Qty : Register_Count; Values : out Register_Array) return Status;
+   ```
+
+3. **Call `Modbus_Poll`** from your main loop to process incoming requests.
 
 ## Memory Usage
 
-Approximate RAM usage:
-- Request buffer: 256 bytes
-- Response buffer: 256 bytes
-- Register data: configurable
-- Stack: ~1KB per call
-
-Total: ~2-3KB minimum
+| Component | Size |
+|-----------|------|
+| Request buffer | 256 bytes |
+| Response buffer | 256 bytes |
+| Stack per call | ~1 KB |
+| **Total** | ~2-3 KB |

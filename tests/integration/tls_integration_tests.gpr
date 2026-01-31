@@ -1,0 +1,42 @@
+--  TLS_Integration_Tests.gpr - GPRbuild project for Modbus TLS integration tests
+--  Copyright (c) 2026 Florian Fischer
+--  SPDX-License-Identifier: MIT
+--
+--  Build:
+--    cd tls && alr exec -- gprbuild -P ../tests/integration/tls_integration_tests.gpr
+--
+--  Prerequisites:
+--    - Generate test certificates: tests/integration/certs/generate_test_certs.sh
+--    - Start TLS server: python tests/integration/tls_modbus_server.py --cert ... --key ...
+
+with "aunit";
+with "aws";
+with "adamodbus";
+
+project TLS_Integration_Tests is
+
+   --  Source directories
+   for Source_Dirs use (
+      ".",                           --  Integration test sources
+      "../../tls/src"                --  TLS transport sources
+   );
+
+   for Object_Dir use "../../obj/tls_integration_tests";
+   for Exec_Dir use "../../bin";
+   for Main use ("tls_integration_test_runner.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-gnat2022",      --  Ada 2022 language standard
+         "-gnatwa",        --  Enable all common warnings
+         "-gnatw.X",       --  Disable warnings for No_Exception_Propagation
+         "-gnatw_A",       --  Disable anonymous access type allocator warnings
+         "-g",             --  Generate debug information
+         "-O0");           --  No optimization for debugging
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");  --  Store traceback in exceptions
+   end Binder;
+
+end TLS_Integration_Tests;

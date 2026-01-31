@@ -1,0 +1,28 @@
+--  TLS mbedTLS Tests - Desktop verification
+
+with "../adamodbus_tls_mbed.gpr";
+
+project TLS_Mbed_Tests is
+
+   for Source_Dirs use (".");
+   for Object_Dir use "../obj/tests";
+   for Exec_Dir use "../bin";
+
+   for Main use ("test_bindings.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnat2022", "-gnatwa", "-g");
+   end Compiler;
+
+   package Linker is
+      --  Link against mbedTLS system libraries
+      --  Stack size is automatically set by GNAT runtime on Windows
+      for Default_Switches ("Ada") use
+        ("-lmbedtls", "-lmbedx509", "-lmbedcrypto");
+   end Linker;
+
+   package Builder is
+      for Executable ("test_bindings.adb") use "test_mbed_bindings";
+   end Builder;
+
+end TLS_Mbed_Tests;

@@ -1,0 +1,5 @@
+# Generated certificates - regenerate with generate_test_certs.sh
+*.key
+*.crt
+*.csr
+*.srl

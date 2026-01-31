@@ -526,9 +526,9 @@ package body Test_SunSpec is
    procedure Test_Meter_Totals (T : in Out Test_Case'Class) is
       pragma Unreferenced (T);
       Regs : Register_Array (0 .. 54) := [others => 0];
-      SF   : Meter_Scale_Factors := (A_SF => -2, V_SF => -1, Hz_SF => -2,
-                                     W_SF => 0, VA_SF => 0, VAR_SF => 0,
-                                     PF_SF => -2, Wh_SF => 0);
+      SF   : constant Meter_Scale_Factors := (A_SF => -2, V_SF => -1, Hz_SF => -2,
+                                              W_SF => 0, VA_SF => 0, VAR_SF => 0,
+                                              PF_SF => -2, Wh_SF => 0);
       Data : Meter_Data;
    begin
       --  Set up test registers (Reg_X - 2 to skip header)

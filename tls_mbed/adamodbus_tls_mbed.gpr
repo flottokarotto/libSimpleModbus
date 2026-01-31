@@ -1,0 +1,40 @@
+--  AdaModbus TLS mbedTLS - TLS/SSL Transport for Embedded Systems
+--
+--  Provides Modbus/TCP Security (Port 802) using mbedTLS.
+--  Suitable for MCU targets (Cortex-M, etc.) with ZFP/Light runtime.
+--
+--  Note: mbedTLS library must be provided by the target BSP or linked externally.
+
+with "adamodbus";
+
+project Adamodbus_TLS_Mbed is
+
+   for Library_Name use "adamodbus_tls_mbed";
+   for Library_Version use "1.0.0";
+
+   for Source_Dirs use ("src", "src/bindings");
+   for Object_Dir use "obj";
+   for Library_Dir use "lib";
+
+   for Library_Kind use "static";
+
+   type Build_Mode_Type is ("debug", "release");
+   Build_Mode : Build_Mode_Type := external ("ADAMODBUS_BUILD_MODE", "debug");
+
+   package Compiler is
+      Common_Switches := ("-gnat2022", "-gnatwa", "-gnatw.X");
+
+      case Build_Mode is
+         when "debug" =>
+            for Default_Switches ("Ada") use Common_Switches & ("-g", "-O0");
+         when "release" =>
+            for Default_Switches ("Ada") use Common_Switches & ("-O2", "-gnatn");
+      end case;
+   end Compiler;
+
+   --  Note: When linking against this library, add the following to your project:
+   --    package Linker is
+   --       for Default_Switches ("Ada") use ("-lmbedtls", "-lmbedx509", "-lmbedcrypto");
+   --    end Linker;
+
+end Adamodbus_TLS_Mbed;

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, 'feature/**']
   pull_request:
     branches: [master, main]
 
@@ -12,10 +12,8 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -26,73 +24,45 @@ jobs:
           toolchain: gnat_native^15
           cache: true
 
-      - name: Cache Alire downloads
+      - name: Cache Alire
         uses: actions/cache@v4
         with:
           path: ~/.cache/alire
-          key: alire-cache-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
-          restore-keys: |
-            alire-cache-${{ runner.os }}-
+          key: alire-${{ runner.os }}-${{ hashFiles('alire.toml') }}
 
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
-
-      - name: Build library
-        run: alr build
-
-      - name: Build tests with coverage
-        run: alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled
-
-      - name: Run tests
-        run: ./bin/test_runner
-
-      - name: Install lcov (cached)
-        uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: lcov
-          version: 1.0
-
-      - name: Generate coverage report
+      - name: Build and test
         run: |
-          GCOV_TOOL=$(alr exec -- which gcov)
-          lcov --capture --directory obj/tests --output-file coverage.info --gcov-tool "$GCOV_TOOL"
-          lcov --remove coverage.info '/usr/*' '*/aunit/*' --output-file coverage.info --ignore-errors unused
-          lcov --list coverage.info
+          alr toolchain --select gnat_native^15 gprbuild
+          alr build
+          alr exec -- gprbuild -P tests/aunit_tests.gpr -XAUNIT_RUNTIME=full -XCOVERAGE=enabled
+          ./bin/test_runner
 
-      - name: Upload coverage to Codecov
+      - name: Coverage
+        run: |
+          sudo apt-get install -qq lcov
+          GCOV=$(alr exec -- which gcov)
+          lcov --capture --directory obj/tests --output-file coverage.info --gcov-tool "$GCOV"
+          lcov --remove coverage.info '/usr/*' '*/aunit/*' -o coverage.info --ignore-errors unused
+
+      - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.info
-          slug: flottokarotto/AdaModbus
           fail_ci_if_error: false
 
-      - name: Validate SunSpec offsets
+      - name: Validate SunSpec & build examples
         run: |
           python3 tools/sunspec_codegen.py --validate 1 src/energy/ada_modbus-energy-sunspec-common.ads
           python3 tools/sunspec_codegen.py --validate 103 src/energy/ada_modbus-energy-sunspec-inverter.ads
           python3 tools/sunspec_codegen.py --validate 124 src/energy/ada_modbus-energy-sunspec-storage.ads
           python3 tools/sunspec_codegen.py --validate 203 src/energy/ada_modbus-energy-sunspec-meter.ads
-
-      - name: Build examples
-        run: alr exec -- gprbuild -P examples/examples.gpr
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: |
-            bin/
-            obj/
-          retention-days: 1
+          alr exec -- gprbuild -P examples/examples.gpr
 
   integration-tests:
     runs-on: ubuntu-latest
-    needs: build-and-test
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
@@ -101,57 +71,48 @@ jobs:
           toolchain: gnat_native^15
           cache: true
 
-      - name: Cache Alire downloads
+      - name: Cache Alire
         uses: actions/cache@v4
         with:
           path: ~/.cache/alire
-          key: alire-cache-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
-          restore-keys: |
-            alire-cache-${{ runner.os }}-
+          key: alire-${{ runner.os }}-${{ hashFiles('alire.toml', 'tls/alire.toml') }}
 
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-
-      - name: Sync Alire dependencies
-        run: alr update
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: tests/integration/requirements.txt
 
-      - name: Install pymodbus
-        run: python3 -m pip install -r tests/integration/requirements.txt
-
-      - name: Start Modbus Simulator
+      - name: Setup
         run: |
-          nohup python3 tests/integration/modbus_simulator.py --port 5020 > simulator.log 2>&1 &
-          sleep 2
-          cat simulator.log || true
+          alr toolchain --select gnat_native^15 gprbuild
+          pip install -r tests/integration/requirements.txt
+          chmod +x tests/integration/certs/generate_test_certs.sh
+          tests/integration/certs/generate_test_certs.sh
+          cd tls && alr pin adamodbus --use=.. && alr build
 
-      - name: Build integration tests
-        run: alr exec -- gprbuild -P tests/integration/integration_tests.gpr
+      - name: Run Modbus TCP tests
+        run: |
+          nohup python3 tests/integration/modbus_simulator.py --port 5020 &
+          sleep 1
+          alr exec -- gprbuild -P tests/integration/integration_tests.gpr
+          ./bin/integration_test_runner
+          pkill -f modbus_simulator.py || true
 
-      - name: Run integration tests
-        run: ./bin/integration_test_runner
-
-      - name: Stop Modbus Simulator
-        if: always()
-        run: pkill -f modbus_simulator.py || true
+      - name: Run TLS tests
+        run: |
+          nohup python3 tests/integration/tls_modbus_server.py \
+            --cert tests/integration/certs/server.crt \
+            --key tests/integration/certs/server.key --port 8802 &
+          sleep 1
+          cd tls && alr exec -- gprbuild -P ../tests/integration/tls_integration_tests.gpr -XSOCKET=openssl
+          cd .. && ./bin/tls_integration_test_runner
+          pkill -f tls_modbus_server.py || true
 
   spark-verify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
@@ -160,59 +121,36 @@ jobs:
           toolchain: gnat_native^15
           cache: true
 
-      - name: Cache Alire downloads
+      - name: Cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/alire
-          key: alire-cache-${{ runner.os }}-${{ hashFiles('alire.toml', 'alire.lock') }}
-          restore-keys: |
-            alire-cache-${{ runner.os }}-
-
-      - name: Select toolchain
-        run: alr toolchain --select gnat_native^15 gprbuild
-
-      - name: Sync dependencies
-        run: alr update
-
-      - name: Add gnatprove for SPARK verification
-        run: alr --force with gnatprove
-
-      - name: Cache SPARK results
-        uses: actions/cache@v4
-        with:
-          path: obj/gnatprove
+          path: |
+            ~/.cache/alire
+            obj/gnatprove
           key: spark-${{ runner.os }}-${{ hashFiles('src/**/*.ads', 'src/**/*.adb') }}
-          restore-keys: |
-            spark-${{ runner.os }}-
 
-      - name: Run SPARK proof
+      - name: SPARK proof
         run: |
-          alr exec -- gnatprove -P adamodbus.gpr \
-            --mode=prove --level=1 -j0 \
-            --report=statistics --output=oneline 2>&1 | tee spark_results.txt
+          alr toolchain --select gnat_native^15 gprbuild
+          alr update
+          alr --force with gnatprove
+          alr exec -- gnatprove -P adamodbus.gpr --mode=prove --level=1 -j0 \
+            --report=statistics --output=oneline 2>&1 | tee spark.txt
+          UNPROVEN=$(grep -oP 'Unproved\s+\K\d+' spark.txt || echo "0")
+          [ "$UNPROVEN" -le 5 ] || exit 1
 
-          UNPROVEN=$(grep -oP 'Unproved\s+\K\d+' spark_results.txt || echo "0")
-          echo "Unproven checks: $UNPROVEN"
-          if [ "$UNPROVEN" -gt 5 ]; then
-            echo "::error::SPARK proof regression: $UNPROVEN unproven checks (expected <=5)"
-            exit 1
-          fi
-
-      - name: Upload SPARK results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: spark-results
-          path: |
-            spark_results.txt
-            obj/gnatprove/gnatprove.out
+          path: spark.txt
 
   build-embedded:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - name: Setup Alire
         uses: alire-project/setup-alire@v3
@@ -221,38 +159,38 @@ jobs:
           toolchain: gnat_arm_elf^15
           cache: true
 
-      - name: Cache Alire ARM downloads
+      - name: Cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/alire
-          key: alire-arm-cache-${{ runner.os }}-${{ hashFiles('examples/embedded/**/alire.toml') }}
-          restore-keys: |
-            alire-arm-cache-${{ runner.os }}-
+          key: alire-arm-${{ runner.os }}-${{ hashFiles('examples/embedded/**/alire.toml') }}
 
-      - name: Select ARM toolchain
-        run: alr toolchain --select gnat_arm_elf^15 gprbuild
-
-      - name: Install QEMU (cached)
+      - name: Install QEMU
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: qemu-system-arm
           version: 1.0
 
-      - name: Build embedded loopback example
-        run: cd examples/embedded/cortex_m4_lwip && alr build
-
-      - name: Run loopback test in QEMU
+      - name: Build & test embedded
         run: |
+          alr toolchain --select gnat_arm_elf^15 gprbuild
+
+          # Loopback test
+          cd examples/embedded/cortex_m4_lwip && alr build
           timeout 10 qemu-system-arm -M lm3s6965evb -nographic -semihosting \
-            -kernel examples/embedded/cortex_m4_lwip/bin/main_loopback.elf || true
+            -kernel bin/main_loopback.elf || true
+          cd ../../..
 
-      - name: Build RTU master/slave examples
-        run: |
+          # RTU test
           cd examples/embedded/stm32_rtu && alr build
           alr exec -- gprbuild -P stm32_rtu.gpr -XMAIN=slave
           alr exec -- gprbuild -P stm32_rtu.gpr -XMAIN=master
+          chmod +x run_ci_test.sh && ./run_ci_test.sh
+          cd ../../..
 
-      - name: Run RTU master/slave test in QEMU
-        run: |
-          chmod +x examples/embedded/stm32_rtu/run_ci_test.sh
-          examples/embedded/stm32_rtu/run_ci_test.sh
+          # TLS loopback test
+          cd examples/embedded/cortex_m4_tls
+          alr exec -- gprbuild -P cortex_m4_tls.gpr -XMBEDTLS_MODE=loopback
+          timeout 10 qemu-system-arm -M lm3s6965evb -nographic -semihosting \
+            -kernel bin/main_loopback_tls.elf 2>&1 | tee qemu.txt || true
+          grep -q "LOOPBACK TEST PASSED" qemu.txt
