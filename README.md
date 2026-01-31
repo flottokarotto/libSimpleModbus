@@ -20,17 +20,18 @@ Ada 2022 Modbus library for embedded and desktop systems.
 
 ## Status
 
-| Component | Maturity |
-|-----------|----------|
-| Modbus TCP | Tested (Kostal WR, KSEM, go-e) |
-| Protocol Core | Tested (114 unit tests, SPARK proven) |
-| SunSpec | Tested (Kostal devices) |
-| Modbus RTU | Unit tests only |
-| Modbus ASCII | Unit tests only |
-| Serial Transport | Basic (Windows) |
-| TLS (Desktop) | Experimental |
-| TLS (Embedded) | Experimental |
-| Embedded (ARM) | QEMU only, needs hardware testing |
+**Getestet** mit echter Hardware:
+- Modbus TCP mit Kostal PLENTICORE Wechselrichter
+- Modbus TCP mit Kostal Smart Energy Meter (KSEM)
+- SunSpec Inverter/Meter Models
+
+**Nur Unit Tests:**
+- Modbus RTU, ASCII
+- Serial Transport (Windows)
+
+**Experimentell:**
+- TLS (kompiliert, nicht mit echten Geräten getestet)
+- Embedded ARM (läuft in QEMU, keine echte Hardware)
 
 ## Quick Start
 
